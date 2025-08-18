@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Logs
+*.log
+
+# Sensitive
+.env
+config/secrets.yaml
+
+# Test files
+test_*.yaml
+*.test.yaml
+
+# Media cache
+assets/temp/

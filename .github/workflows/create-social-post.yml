@@ -1,0 +1,68 @@
+name: Create Social Post from Blog
+
+on:
+  repository_dispatch:
+    types: [new_blog_post]
+  workflow_dispatch:
+    inputs:
+      blog_slug:
+        description: 'Blog post slug (e.g., nsf-pose-phase-1-grant)'
+        required: true
+        type: string
+      blog_title:
+        description: 'Blog post title (optional)'
+        required: false
+        type: string
+
+jobs:
+  generate-post:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+      
+      - name: Generate social content
+        env:
+          BLOG_SLUG: ${{ github.event.client_payload.slug || inputs.blog_slug }}
+          BLOG_TITLE: ${{ github.event.client_payload.title || inputs.blog_title }}
+        run: |
+          python scripts/generate_social_post.py \
+            --slug "$BLOG_SLUG" \
+            --title "$BLOG_TITLE" \
+            --output "posts/queue/$(date +%Y-%m-%d)-$BLOG_SLUG.yaml"
+      
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          title: "📱 Social posts for: ${{ github.event.client_payload.title || inputs.blog_title || inputs.blog_slug }}"
+          body: |
+            ## 🤖 Auto-generated social media posts
+            
+            Blog post: `${{ github.event.client_payload.slug || inputs.blog_slug }}`
+            
+            ### Review checklist:
+            - [ ] X/Twitter thread flows well
+            - [ ] LinkedIn post is professional
+            - [ ] Links are correct
+            - [ ] Hashtags are appropriate
+            - [ ] Images are attached (if applicable)
+            - [ ] Timing is appropriate
+            
+            ### Preview:
+            See the generated content in the Files tab below.
+            
+            ---
+            *Edit the YAML file directly if changes are needed.*
+          branch: social/${{ github.event.client_payload.slug || inputs.blog_slug }}
+          commit-message: "Add social posts for ${{ github.event.client_payload.slug || inputs.blog_slug }}"
+          labels: |
+            social-media
+            automated

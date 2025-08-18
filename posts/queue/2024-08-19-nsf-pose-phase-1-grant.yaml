@@ -1,0 +1,78 @@
+title: "National Science Foundation awards PolicyEngine $300,000 grant"
+source: "blog/nsf-pose-phase-1-grant"
+url: "https://policyengine.org/us/blog/nsf-pose-phase-1-grant"
+publish_at: "2024-08-19T10:00:00-05:00"
+status: "review"
+platforms:
+  x:
+    thread:
+      - |
+        🎉 Exciting news: @NSF has awarded PolicyEngine a $300,000 Phase I grant through their Pathways to Enable Open-Source Ecosystems (POSE) program!
+        
+        This grant will help us strengthen the open-source ecosystem around economic policy analysis tools.
+        
+        🧵 Here's what we'll be doing:
+      - |
+        Our grant activities focus on three key areas:
+        
+        🔬 Ecosystem Discovery: 100+ stakeholder interviews with researchers, government agencies, and nonprofits
+        
+        🤝 Community Building: Developing partnerships and creating resources for contributors
+        
+        🏛️ Governance: Building sustainable structures for growth
+      - |
+        We're learning from successful projects like TAXSIM (1,100+ citations!) with Dr. Dan Feenberg as our mentor.
+        
+        This builds on our mission to democratize policy analysis and make sophisticated economic modeling accessible to all.
+      - |
+        Read the full announcement and NSF award abstract:
+        https://policyengine.org/us/blog/nsf-pose-phase-1-grant
+        
+        View our application materials:
+        https://drive.google.com/drive/folders/1QzAXCGQJ-Z0Mn1OSx6qKMDJvEup7RKpH
+        
+        NSF Award page:
+        https://www.nsf.gov/awardsearch/showAward?AWD_ID=2518372
+    media: ["nsf-official-logo.png"]
+    hashtags: ["NSF", "OpenSource", "PolicyTech", "GovTech"]
+    
+  linkedin:
+    text: |
+      🎉 We're thrilled to announce that PolicyEngine has been awarded a $300,000 Phase I grant from the National Science Foundation's Pathways to Enable Open-Source Ecosystems (POSE) program (Award No. 2518372).
+      
+      This grant recognizes PolicyEngine's role in transforming tax-benefit microsimulations into open-source infrastructure accessible to local governments, nonprofits, and citizens.
+      
+      Key objectives of our POSE Phase I work:
+      
+      🔬 Ecosystem Discovery
+      • Conduct 100+ stakeholder interviews
+      • Map the policy analysis tool landscape
+      • Study successful open-source economic modeling projects
+      
+      🤝 Community Building
+      • Develop strategic partnerships
+      • Create contributor documentation and resources
+      • Engage at major economics and policy conferences
+      
+      🏛️ Governance Development
+      • Design transparent decision-making structures
+      • Create sustainable funding models
+      • Establish quality and contribution management processes
+      
+      We're particularly excited to learn from Dr. Dan Feenberg, creator of TAXSIM (cited in 1,100+ academic publications), who will serve as our external mentor.
+      
+      This grant will help us strengthen PolicyEngine's technical capabilities—including state and congressional district-level analysis powered by machine learning—while building the organizational infrastructure to sustainably serve community interests.
+      
+      Read more: https://policyengine.org/us/blog/nsf-pose-phase-1-grant
+      
+      Thank you to the NSF for supporting our mission to democratize policy analysis. We look forward to expanding access to sophisticated economic policy tools for researchers, policymakers, and citizens alike.
+      
+      #OpenSource #PolicyAnalysis #NSF #GovTech #EconomicModeling #PublicPolicy #MachineLearning #OpenData
+    media: ["nsf-official-logo.png"]
+    visibility: "public"
+    
+metadata:
+  generated_at: "2024-08-18T16:30:00"
+  generator_version: "1.0.0"
+  reviewed_by: null
+  notes: "Major announcement - consider pinning on X profile"
