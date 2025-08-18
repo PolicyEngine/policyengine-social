@@ -62,14 +62,28 @@ class XPublisher:
         
         return tweet_ids[0]  # Return first tweet ID
     
-    def upload_media(self, media_files: List[str]) -> List[str]:
+    def upload_media(self, media_refs: List[str], images_dict: Dict) -> List[str]:
         """Upload media files and return media IDs."""
+        from extract_blog_images import BlogImageExtractor
+        
         media_ids = []
         
-        for file_path in media_files:
-            if os.path.exists(file_path):
-                media = self.api.media_upload(file_path)
-                media_ids.append(media.media_id_string)
+        for img_ref in media_refs:
+            if img_ref in images_dict:
+                img_info = images_dict[img_ref]
+                
+                # Download/cache the image
+                extractor = BlogImageExtractor("")  # Just for downloading
+                img_path = extractor.download_image(img_info)
+                
+                if img_path:
+                    # Optimize for X
+                    optimized = extractor.optimize_for_platform(img_path, 'x')
+                    
+                    # Upload to X
+                    media = self.api.media_upload(str(optimized))
+                    media_ids.append(media.media_id_string)
+                    print(f"✓ Uploaded to X: {img_info['filename']}")
         
         return media_ids if media_ids else None
     

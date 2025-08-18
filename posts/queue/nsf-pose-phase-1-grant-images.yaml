@@ -1,0 +1,8 @@
+images:
+  cover:
+    alt: Cover image for National Science Foundation awards PolicyEngine $300,000
+      grant
+    filename: nsf-official-logo.png
+    id: cover
+    type: hero
+    url: https://raw.githubusercontent.com/PolicyEngine/policyengine-app/master/src/images/posts/nsf-official-logo.png

@@ -90,27 +90,38 @@ What are your thoughts on [relevant question]? We'd love to hear your perspectiv
         tomorrow = datetime.now() + timedelta(days=1)
         publish_time = tomorrow.replace(hour=10, minute=0, second=0, microsecond=0)
         
+        # Extract images from blog
+        from extract_blog_images import BlogImageExtractor
+        extractor = BlogImageExtractor(self.slug)
+        images = extractor.extract_images()
+        
+        # Auto-select images for each platform
+        x_images = extractor.auto_select_images(images, 'x')
+        linkedin_images = extractor.auto_select_images(images, 'linkedin')
+        
         return {
             'title': self.content['title'],
             'source': f"blog/{self.slug}",
             'url': self.blog_url,
             'publish_at': publish_time.isoformat(),
             'status': 'draft',
+            'images': images,  # All available images
             'platforms': {
                 'x': {
                     'thread': self.generate_x_thread(),
-                    'media': [],  # Add images if available
+                    'media': x_images,  # Selected image IDs
                     'hashtags': ['PolicyEngine', 'PolicyAnalysis']
                 },
                 'linkedin': {
                     'text': self.generate_linkedin_post(),
-                    'media': [],
+                    'media': linkedin_images[:1],  # Usually just one
                     'visibility': 'public'
                 }
             },
             'metadata': {
                 'generated_at': datetime.now().isoformat(),
-                'generator_version': '1.0.0'
+                'generator_version': '1.0.0',
+                'auto_selected_images': True
             }
         }
 

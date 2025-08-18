@@ -27,4 +27,10 @@ test_*.yaml
 *.test.yaml
 
 # Media cache
+assets/cache/
+assets/optimized/
 assets/temp/
+
+# Don't commit raw screenshots (too large)
+assets/screenshots/*.png
+!assets/screenshots/.gitkeep

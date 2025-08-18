@@ -1,0 +1,75 @@
+name: Capture PolicyEngine Screenshots
+
+on:
+  workflow_dispatch:
+    inputs:
+      urls:
+        description: 'URLs to screenshot (comma-separated)'
+        required: false
+        default: 'https://policyengine.org/us'
+      policy_id:
+        description: 'Policy ID to screenshot (optional)'
+        required: false
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install Playwright
+        run: |
+          pip install playwright
+          playwright install chromium
+          playwright install-deps
+      
+      - name: Capture homepage
+        run: |
+          playwright screenshot \
+            --wait-for-timeout=5000 \
+            --viewport-size=1200,630 \
+            "https://policyengine.org/us" \
+            "assets/screenshots/policyengine-home.png"
+      
+      - name: Capture policy if specified
+        if: inputs.policy_id != ''
+        run: |
+          playwright screenshot \
+            --wait-for-timeout=5000 \
+            --viewport-size=1200,630 \
+            "https://policyengine.org/us/policy?reform=${{ inputs.policy_id }}" \
+            "assets/screenshots/policy-${{ inputs.policy_id }}.png"
+      
+      - name: Capture custom URLs
+        if: inputs.urls != ''
+        run: |
+          IFS=',' read -ra URLS <<< "${{ inputs.urls }}"
+          for url in "${URLS[@]}"; do
+            # Create filename from URL
+            filename=$(echo "$url" | sed 's/https:\/\///g' | sed 's/\//-/g')
+            playwright screenshot \
+              --wait-for-timeout=5000 \
+              --viewport-size=1200,630 \
+              "$url" \
+              "assets/screenshots/${filename}.png"
+          done
+      
+      - name: Optimize screenshots
+        run: |
+          pip install Pillow
+          python scripts/extract_blog_images.py \
+            --slug temp \
+            --optimize x
+      
+      - name: Create PR with screenshots
+        uses: peter-evans/create-pull-request@v5
+        with:
+          title: "📸 Add screenshots for social media"
+          body: "Captured screenshots for social media use"
+          branch: screenshots-${{ github.run_id }}
+          commit-message: "Add PolicyEngine screenshots"
