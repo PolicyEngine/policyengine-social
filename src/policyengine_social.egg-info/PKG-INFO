@@ -1,0 +1,134 @@
+Metadata-Version: 2.4
+Name: policyengine-social
+Version: 0.1.0
+Summary: Automated social media posting for PolicyEngine blog articles
+Author-email: PolicyEngine <hello@policyengine.org>
+License: MIT
+Project-URL: Homepage, https://github.com/PolicyEngine/policyengine-social
+Project-URL: Documentation, https://github.com/PolicyEngine/policyengine-social#readme
+Project-URL: Repository, https://github.com/PolicyEngine/policyengine-social
+Project-URL: Issues, https://github.com/PolicyEngine/policyengine-social/issues
+Keywords: social-media,automation,policy,x,twitter,linkedin
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+Requires-Dist: pyyaml>=6.0
+Requires-Dist: requests>=2.31.0
+Requires-Dist: python-dateutil>=2.8.2
+Requires-Dist: tweepy>=4.14.0
+Requires-Dist: requests-oauthlib>=1.3.1
+Requires-Dist: beautifulsoup4>=4.12.0
+Requires-Dist: markdown>=3.4.4
+Requires-Dist: pytz>=2023.3
+Requires-Dist: Pillow>=10.0.0
+Requires-Dist: playwright>=1.40.0
+Provides-Extra: dev
+Requires-Dist: pytest>=7.4.0; extra == "dev"
+Requires-Dist: pytest-cov>=4.1.0; extra == "dev"
+Requires-Dist: pytest-mock>=3.11.0; extra == "dev"
+Requires-Dist: coverage>=7.2.0; extra == "dev"
+Requires-Dist: black>=23.0.0; extra == "dev"
+Requires-Dist: flake8>=6.0.0; extra == "dev"
+Requires-Dist: isort>=5.12.0; extra == "dev"
+Requires-Dist: mypy>=1.4.0; extra == "dev"
+Requires-Dist: faker>=19.0.0; extra == "dev"
+
+# PolicyEngine Social Media Automation
+
+Automated social media posting for PolicyEngine blog articles and announcements.
+
+## Features
+
+- 🤖 Auto-generates social posts from blog articles
+- 🐦 Posts to X (Twitter) with thread support
+- 💼 Posts to LinkedIn with professional formatting
+- 📊 Tracks engagement and analytics
+- ✅ Review process via GitHub PRs
+- 📅 Scheduling and timezone optimization
+
+## Setup
+
+1. Clone this repository
+2. Set up GitHub Secrets (see below)
+3. Posts are automatically created when blog posts are merged
+
+## How it Works
+
+1. When a new blog post is published to `policyengine-app`, a GitHub Action triggers
+2. The action creates a draft social media post as a PR in this repo
+3. Team reviews and edits the content
+4. Upon merge, posts are automatically published to X and LinkedIn
+5. Analytics are tracked and reported back as GitHub issues
+
+## Repository Structure
+
+```
+posts/
+├── queue/         # Posts waiting to be published
+├── published/     # Archive of published posts
+└── drafts/        # Work in progress
+
+templates/         # Reusable post templates
+scripts/          # Automation scripts
+.github/
+└── workflows/    # GitHub Actions
+```
+
+## Required Secrets
+
+Set these in your repository settings:
+
+- `X_API_KEY` - X/Twitter API credentials
+- `X_API_SECRET`
+- `X_ACCESS_TOKEN`
+- `X_ACCESS_SECRET`
+- `LINKEDIN_ACCESS_TOKEN` - LinkedIn API token
+- `GITHUB_TOKEN` - For cross-repo access (auto-provided)
+
+## Post Format
+
+Posts are stored as YAML files with platform-specific content:
+
+```yaml
+title: "Post Title"
+source: "blog/article-slug"
+publish_at: "2024-08-19T10:00:00-05:00"  # Optional scheduling
+platforms:
+  x:
+    thread:
+      - "First tweet with engaging hook"
+      - "Second tweet with details"
+    media: ["image1.png"]
+  linkedin:
+    text: "Professional summary..."
+    media: ["image1.png"]
+```
+
+## Usage
+
+### Manual Trigger
+
+To manually create a social post for a blog article:
+
+1. Go to Actions tab
+2. Select "Create Social Post from Blog"
+3. Enter the blog slug
+4. Review and merge the generated PR
+
+### Automatic Trigger
+
+Posts are automatically created when:
+- A new blog post is merged to `policyengine-app`
+- The post includes social media metadata
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.

@@ -28,15 +28,47 @@ Automated social media posting for PolicyEngine blog articles and announcements.
 ## Repository Structure
 
 ```
-posts/
-├── queue/         # Posts waiting to be published
-├── published/     # Archive of published posts
-└── drafts/        # Work in progress
+src/
+└── policyengine_social/   # Main package
+    ├── extract.py         # Image extraction
+    ├── generate.py        # Post generation
+    └── publish.py         # Publishing logic
 
-templates/         # Reusable post templates
-scripts/          # Automation scripts
+tests/                     # Comprehensive test suite
+├── test_extract_blog_images.py
+├── test_generate_social_post.py
+└── test_publish_to_x.py
+
+posts/
+├── queue/                 # Posts waiting to be published
+├── published/             # Archive of published posts
+└── drafts/                # Work in progress
+
 .github/
-└── workflows/    # GitHub Actions
+└── workflows/             # GitHub Actions
+```
+
+## Installation
+
+```bash
+# Install the package
+pip install -e ".[dev]"
+
+# Install playwright for screenshots
+playwright install chromium
+```
+
+## Testing
+
+```bash
+# Run all tests
+pytest tests/
+
+# Run with coverage
+pytest tests/ --cov=policyengine_social
+
+# Run specific test
+pytest tests/test_extract_blog_images.py -v
 ```
 
 ## Required Secrets

@@ -24,8 +24,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install coverage pytest pytest-cov
+          pip install -e ".[dev]"
       
       - name: Run tests with coverage
         run: |
@@ -56,13 +55,13 @@ jobs:
           pip install black flake8 mypy
       
       - name: Run Black
-        run: black --check scripts/ tests/
+        run: black --check src/ tests/
       
       - name: Run Flake8
-        run: flake8 scripts/ tests/ --max-line-length=100
+        run: flake8 src/ tests/ --max-line-length=88
       
       - name: Run MyPy
-        run: mypy scripts/ --ignore-missing-imports
+        run: mypy src/ --ignore-missing-imports
         continue-on-error: true  # MyPy can be strict, don't fail CI
   
   validate-yaml:

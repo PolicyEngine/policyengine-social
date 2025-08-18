@@ -1,0 +1,5 @@
+[console_scripts]
+pe-social = policyengine_social.cli:main
+pe-social-extract = policyengine_social.extract:main
+pe-social-generate = policyengine_social.generate:main
+pe-social-publish = policyengine_social.publish:main
