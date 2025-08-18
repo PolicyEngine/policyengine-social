@@ -1,0 +1,146 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "policyengine-social"
+version = "0.1.0"
+description = "Automated social media posting for PolicyEngine blog articles"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+authors = [
+    {name = "PolicyEngine", email = "hello@policyengine.org"},
+]
+keywords = ["social-media", "automation", "policy", "x", "twitter", "linkedin"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+dependencies = [
+    "pyyaml>=6.0",
+    "requests>=2.31.0",
+    "python-dateutil>=2.8.2",
+    "tweepy>=4.14.0",
+    "requests-oauthlib>=1.3.1",
+    "beautifulsoup4>=4.12.0",
+    "markdown>=3.4.4",
+    "pytz>=2023.3",
+    "Pillow>=10.0.0",
+    "playwright>=1.40.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "pytest-mock>=3.11.0",
+    "coverage>=7.2.0",
+    "black>=23.0.0",
+    "flake8>=6.0.0",
+    "isort>=5.12.0",
+    "mypy>=1.4.0",
+    "faker>=19.0.0",
+]
+
+[project.scripts]
+pe-social = "policyengine_social.cli:main"
+pe-social-generate = "policyengine_social.generate:main"
+pe-social-publish = "policyengine_social.publish:main"
+pe-social-extract = "policyengine_social.extract:main"
+
+[project.urls]
+Homepage = "https://github.com/PolicyEngine/policyengine-social"
+Documentation = "https://github.com/PolicyEngine/policyengine-social#readme"
+Repository = "https://github.com/PolicyEngine/policyengine-social"
+Issues = "https://github.com/PolicyEngine/policyengine-social/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["policyengine_social*"]
+
+[tool.setuptools.package-data]
+policyengine_social = ["templates/*.yaml", "templates/*.md"]
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "-ra",
+    "--strict-markers",
+    "--cov=policyengine_social",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+    "--cov-report=xml",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["policyengine_social"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+    "pass",
+    "except ImportError:",
+]
+
+[tool.black]
+line-length = 88
+target-version = ['py39', 'py310', 'py311']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+    \.eggs
+  | \.git
+  | \.mypy_cache
+  | \.venv
+  | _build
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 88
+known_first_party = ["policyengine_social"]
+skip_gitignore = true
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+ignore_missing_imports = true
+exclude = [
+    "tests/",
+    "build/",
+    "dist/",
+]
+
+[tool.flake8]
+max-line-length = 88
+extend-ignore = ["E203", "W503"]
+exclude = [
+    ".git",
+    "__pycache__",
+    "build",
+    "dist",
+    ".venv",
+]

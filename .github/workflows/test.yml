@@ -1,0 +1,95 @@
+name: Test
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.9', '3.10', '3.11']
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install coverage pytest pytest-cov
+      
+      - name: Run tests with coverage
+        run: |
+          coverage run -m pytest tests/ -v
+          coverage report -m
+          coverage xml
+      
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+  
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install linting tools
+        run: |
+          pip install black flake8 mypy
+      
+      - name: Run Black
+        run: black --check scripts/ tests/
+      
+      - name: Run Flake8
+        run: flake8 scripts/ tests/ --max-line-length=100
+      
+      - name: Run MyPy
+        run: mypy scripts/ --ignore-missing-imports
+        continue-on-error: true  # MyPy can be strict, don't fail CI
+  
+  validate-yaml:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Validate YAML files
+        run: |
+          pip install pyyaml
+          python -c "
+          import yaml
+          import sys
+          from pathlib import Path
+          
+          errors = []
+          for yaml_file in Path('.').rglob('*.yaml'):
+              if '.github' not in str(yaml_file):
+                  try:
+                      with open(yaml_file) as f:
+                          yaml.safe_load(f)
+                      print(f'✓ {yaml_file}')
+                  except Exception as e:
+                      errors.append(f'✗ {yaml_file}: {e}')
+                      
+          if errors:
+              for error in errors:
+                  print(error)
+              sys.exit(1)
+          "

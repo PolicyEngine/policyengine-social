@@ -91,7 +91,7 @@ What are your thoughts on [relevant question]? We'd love to hear your perspectiv
         publish_time = tomorrow.replace(hour=10, minute=0, second=0, microsecond=0)
         
         # Extract images from blog
-        from extract_blog_images import BlogImageExtractor
+        from policyengine_social.extract import BlogImageExtractor
         extractor = BlogImageExtractor(self.slug)
         images = extractor.extract_images()
         

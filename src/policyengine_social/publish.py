@@ -64,7 +64,7 @@ class XPublisher:
     
     def upload_media(self, media_refs: List[str], images_dict: Dict) -> List[str]:
         """Upload media files and return media IDs."""
-        from extract_blog_images import BlogImageExtractor
+        from policyengine_social.extract import BlogImageExtractor
         
         media_ids = []
         
