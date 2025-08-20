@@ -16,9 +16,7 @@ platforms:
     
     # Thread for X
     thread:
-      - "🎉 Exciting news! @thepolicyengine has been awarded a $300,000 Phase I POSE grant from @NSF to expand our open-source tax and benefit simulation platform."
-      - "This grant (Award No. 2518372) will help us build sustainable governance structures and grow our contributor community to advance evidence-based policy analysis."
-      - "We're grateful to NSF for supporting our mission to make policy analysis more accessible and transparent. This funding will accelerate our work on democratizing policy modeling."
+      - "🎉 @thepolicyengine has been awarded a $300,000 Phase I POSE grant from @NSF (Award No. 2518372) to expand our open-source platform, build sustainable governance, and grow our contributor community. We're grateful for NSF's support in democratizing policy analysis!"
       - "Read more about our plans and the grant details: https://policyengine.org/us/research/nsf-pose-phase-1-grant"
     
     # Attach NSF logo to first tweet
