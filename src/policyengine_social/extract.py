@@ -4,13 +4,11 @@ Extract and process images from PolicyEngine blog posts.
 """
 
 import re
-import json
 import requests
 from pathlib import Path
 from typing import List, Dict
 import yaml
 from PIL import Image
-from io import BytesIO
 import subprocess
 
 

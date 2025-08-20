@@ -3,6 +3,16 @@
 Run all tests for the PolicyEngine Social Media Automation system.
 """
 
+from tests.test_publish_to_x import TestXPublisher, TestPublishingSchedule
+from tests.test_generate_social_post import (
+    TestSocialPostGenerator,
+    TestContentVariations,
+    TestErrorHandling,
+)
+from tests.test_extract_blog_images import (
+    TestBlogImageExtractor,
+    TestImageIntegration,
+)
 import unittest
 import sys
 from pathlib import Path
@@ -11,16 +21,6 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # Import all test modules
-from tests.test_extract_blog_images import (
-    TestBlogImageExtractor,
-    TestImageIntegration,
-)
-from tests.test_generate_social_post import (
-    TestSocialPostGenerator,
-    TestContentVariations,
-    TestErrorHandling,
-)
-from tests.test_publish_to_x import TestXPublisher, TestPublishingSchedule
 
 
 def create_test_suite():

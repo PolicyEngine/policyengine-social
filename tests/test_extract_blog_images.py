@@ -2,12 +2,12 @@
 """
 Tests for blog image extraction functionality.
 TDD approach - write tests first, then make them pass.
+from unittest.mock import patch, MagicMock
 """
 
 import unittest
-from unittest.mock import patch, MagicMock, mock_open
+from unittest.mock import patch, MagicMock
 from pathlib import Path
-import json
 
 from policyengine_social.extract import BlogImageExtractor
 
@@ -134,7 +134,7 @@ And a final paragraph.
         mock_image.return_value = mock_img
 
         test_path = Path("test.png")
-        result = self.extractor.optimize_for_platform(test_path, "x")
+        self.extractor.optimize_for_platform(test_path, "x")
 
         # Should resize to X specifications
         mock_img.thumbnail.assert_called_once()
@@ -148,7 +148,7 @@ And a final paragraph.
         mock_image.return_value = mock_img
 
         test_path = Path("test.png")
-        result = self.extractor.optimize_for_platform(test_path, "linkedin")
+        self.extractor.optimize_for_platform(test_path, "linkedin")
 
         # Should resize to LinkedIn specifications
         mock_img.thumbnail.assert_called_once()

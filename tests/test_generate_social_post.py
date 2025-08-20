@@ -2,12 +2,10 @@
 """
 Tests for social post generation functionality.
 """
+from datetime import datetime
 
 import unittest
 from unittest.mock import patch, MagicMock
-from datetime import datetime, timedelta
-from pathlib import Path
-import yaml
 
 from policyengine_social.generate import SocialPostGenerator
 

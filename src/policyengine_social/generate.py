@@ -5,10 +5,8 @@ Generate social media posts from PolicyEngine blog articles.
 
 import argparse
 import yaml
-import requests
 from datetime import datetime, timedelta
 from pathlib import Path
-import re
 from typing import Dict, List
 
 

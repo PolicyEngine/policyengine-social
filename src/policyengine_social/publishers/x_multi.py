@@ -6,7 +6,6 @@ import tweepy
 import logging
 from pathlib import Path
 from typing import Dict, List, Optional, Literal
-from datetime import datetime
 import time
 from dotenv import load_dotenv
 

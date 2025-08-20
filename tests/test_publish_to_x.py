@@ -2,11 +2,10 @@
 """
 Tests for X/Twitter publishing functionality.
 """
+from unittest.mock import patch, MagicMock
 
 import unittest
-from unittest.mock import patch, MagicMock, call
 from pathlib import Path
-import yaml
 from datetime import datetime, timedelta
 
 from policyengine_social.publish import XPublisher
@@ -56,7 +55,7 @@ class TestXPublisher(unittest.TestCase):
     @patch("policyengine_social.publish.tweepy.API")
     def test_publisher_initialization(self, mock_api, mock_client):
         """Test XPublisher initialization with credentials."""
-        publisher = XPublisher()
+        XPublisher()
 
         # Should initialize both v2 client and v1.1 API
         mock_client.assert_called_once()

@@ -1,6 +1,5 @@
 """Zapier webhook integration for cross-platform posting."""
 
-import json
 import logging
 from typing import Dict, List, Optional, Any
 import requests
@@ -58,7 +57,7 @@ class ZapierPublisher:
             )
             response.raise_for_status()
 
-            logger.info(f"Successfully sent to Zapier webhook")
+            logger.info("Successfully sent to Zapier webhook")
             return {
                 "success": True,
                 "status_code": response.status_code,
@@ -66,7 +65,7 @@ class ZapierPublisher:
             }
 
         except requests.exceptions.RequestException as e:
-            logger.error(f"Failed to send to Zapier: {e}")
+            logger.error("Failed to send to Zapier: {e}")
             return {
                 "success": False,
                 "error": str(e),
@@ -103,7 +102,7 @@ class ZapierPublisher:
             )
             response.raise_for_status()
 
-            logger.info(f"Successfully sent thread to Zapier webhook")
+            logger.info("Successfully sent thread to Zapier webhook")
             return {
                 "success": True,
                 "status_code": response.status_code,
@@ -111,7 +110,7 @@ class ZapierPublisher:
             }
 
         except requests.exceptions.RequestException as e:
-            logger.error(f"Failed to send thread to Zapier: {e}")
+            logger.error("Failed to send thread to Zapier: {e}")
             return {
                 "success": False,
                 "error": str(e),

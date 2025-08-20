@@ -3,10 +3,7 @@
 
 import argparse
 import yaml
-from pathlib import Path
-from typing import Optional
 from .publishers.x_multi import MultiAccountXPublisher
-from .publishers.zapier import ZapierPublisher
 from .generate import SocialPostGenerator
 from .extract import BlogImageExtractor
 
@@ -35,10 +32,10 @@ def post_to_x(args):
         )
 
     if result["success"]:
-        print(f"✅ Posted successfully!")
-        print(f"📱 View at: {result.get('url') or result.get('thread_url')}")
+        print("✅ Posted successfully!")
+        print("📱 View at: {result.get('url') or result.get('thread_url')}")
     else:
-        print(f"❌ Error: {result.get('error')}")
+        print("❌ Error: {result.get('error')}")
 
     return result["success"]
 
@@ -51,7 +48,7 @@ def generate_posts(args):
         posts = generator.generate_x_thread(max_posts=args.max_posts)
         print("Generated X thread:")
         for i, post in enumerate(posts, 1):
-            print(f"\n[{i}/{len(posts)}]")
+            print("\n[{i}/{len(posts)}]")
             print(post)
     elif args.platform == "linkedin":
         post = generator.generate_linkedin_post()
@@ -67,7 +64,7 @@ def generate_posts(args):
         }
         with open(args.output, "w") as f:
             yaml.dump(output, f)
-        print(f"\n💾 Saved to: {args.output}")
+        print("\n💾 Saved to: {args.output}")
 
 
 def extract_images(args):
@@ -75,13 +72,13 @@ def extract_images(args):
     extractor = BlogImageExtractor(args.url or args.file)
     images = extractor.extract_images()
 
-    print(f"Found {len(images)} images:")
+    print("Found {len(images)} images:")
     for img in images:
-        print(f"  - {img['type']}: {img['filename']}")
+        print("  - {img['type']}: {img['filename']}")
         if args.download:
             path = extractor.download_image(img)
             if path:
-                print(f"    Downloaded to: {path}")
+                print("    Downloaded to: {path}")
 
 
 def main():
@@ -108,7 +105,7 @@ def main():
     # Generate posts command
     gen = subparsers.add_parser("generate", help="Generate posts from blog")
     gen.add_argument("--url", "-u", help="Blog post URL")
-    gen.add_argument("--file", "-f", help="Blog post file")
+    gen.add_argument("--file", "-", help="Blog post file")
     gen.add_argument(
         "--platform",
         "-p",
@@ -122,7 +119,7 @@ def main():
     # Extract images command
     extract = subparsers.add_parser("extract", help="Extract images from blog")
     extract.add_argument("--url", "-u", help="Blog post URL")
-    extract.add_argument("--file", "-f", help="Blog post file")
+    extract.add_argument("--file", "-", help="Blog post file")
     extract.add_argument(
         "--download", "-d", action="store_true", help="Download images"
     )
@@ -155,9 +152,9 @@ def main():
 
         for account, result in results.items():
             if result["success"]:
-                print(f"✅ @{account}: {result['url']}")
+                print("✅ @{account}: {result['url']}")
             else:
-                print(f"❌ @{account}: {result.get('error')}")
+                print("❌ @{account}: {result.get('error')}")
 
         return 0 if success else 1
 
