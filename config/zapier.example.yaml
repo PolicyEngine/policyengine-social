@@ -1,0 +1,33 @@
+# Zapier Webhook Configuration
+# Copy this to zapier.yaml and fill in your webhook URLs
+
+# Get these URLs from your Zapier Zaps:
+# 1. Create a Zap with "Webhooks by Zapier" as trigger
+# 2. Choose "Catch Hook" as the trigger event
+# 3. Copy the webhook URL provided
+
+webhooks:
+  # For PolicyEngine organizational accounts
+  policyengine:
+    # Multi-platform webhook (posts to all platforms)
+    all_platforms: "https://hooks.zapier.com/hooks/catch/YOUR_ACCOUNT_ID/YOUR_WEBHOOK_KEY/"
+    
+    # Platform-specific webhooks (optional)
+    twitter: "https://hooks.zapier.com/hooks/catch/YOUR_ACCOUNT_ID/YOUR_TWITTER_KEY/"
+    linkedin: "https://hooks.zapier.com/hooks/catch/YOUR_ACCOUNT_ID/YOUR_LINKEDIN_KEY/"
+    
+  # For personal accounts (MaxGhenis)
+  personal:
+    all_platforms: "https://hooks.zapier.com/hooks/catch/YOUR_ACCOUNT_ID/YOUR_PERSONAL_KEY/"
+    twitter: "https://hooks.zapier.com/hooks/catch/YOUR_ACCOUNT_ID/YOUR_PERSONAL_TWITTER/"
+    linkedin: "https://hooks.zapier.com/hooks/catch/YOUR_ACCOUNT_ID/YOUR_PERSONAL_LINKEDIN/"
+
+# Platform-specific settings
+platforms:
+  twitter:
+    max_length: 280
+    thread_delay_seconds: 2
+    
+  linkedin:
+    max_length: 3000
+    supports_articles: true

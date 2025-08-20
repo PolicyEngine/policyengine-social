@@ -1,0 +1,59 @@
+# Example social media post for PR-based review
+# Copy this to create a new post, then open a PR
+
+# Post metadata
+title: "Example Post - NSF Grant Announcement"
+author: "MaxGhenis"
+date_created: "2024-08-19"
+tags: ["announcement", "grant", "nsf"]
+
+# Content for each platform
+platforms:
+  x:
+    # Which account(s) to post from
+    accounts: 
+      - thepolicyengine  # Main account
+      # - policyengineus  # Uncomment if US-specific
+      # - policyengineuk  # Uncomment if UK-specific
+    
+    # Single post or thread
+    thread:
+      - "🎉 Excited to announce that @thepolicyengine has received a $300,000 grant from @NSF!"
+      - "This funding will help us expand our open-source tax and benefit simulation platform."
+      - "Read more: https://policyengine.org/us/research/nsf-pose-phase-1-grant"
+    
+    # Optional: Images to attach (to first post only)
+    images:
+      - "assets/nsf-logo.png"
+  
+  linkedin:
+    # LinkedIn post content (via Zapier)
+    content: |
+      Excited to announce that PolicyEngine has received a $300,000 grant from the National Science Foundation!
+      
+      This Phase I POSE grant will enable us to:
+      • Expand our open-source platform
+      • Build sustainable governance structures
+      • Grow our contributor community
+      
+      Read more: https://policyengine.org/us/research/nsf-pose-phase-1-grant
+    
+    # Optional: LinkedIn article link
+    article_url: "https://policyengine.org/us/research/nsf-pose-phase-1-grant"
+
+# Review checklist (for PR description)
+review_checklist:
+  - [ ] Content is accurate and appropriate
+  - [ ] Links are correct and working
+  - [ ] Images are included and optimized
+  - [ ] Target accounts are correct
+  - [ ] No sensitive information included
+  - [ ] Timing is appropriate
+
+# Publishing settings
+publish:
+  # When to publish (optional, defaults to immediate)
+  schedule: "immediate"  # or "2024-08-19T10:00:00Z"
+  
+  # Require manual approval even after PR merge
+  require_manual_trigger: true
