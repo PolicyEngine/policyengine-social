@@ -14,6 +14,7 @@ import os
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from policyengine_social.publishers.x_multi import MultiAccountXPublisher
+from policyengine_social.publishers.bluesky import MultiAccountBlueSkyPublisher
 from policyengine_social.publishers.zapier import ZapierPublisher
 
 
@@ -83,6 +84,57 @@ def publish_post(filepath, prod=False):
                         print(f"    [{i}] {tweet}")
                 elif 'post' in x_config:
                     print(f"    {x_config['post']}")
+    
+    # Process Bluesky posts
+    if 'bluesky' in post.get('platforms', {}):
+        bluesky_config = post['platforms']['bluesky']
+        
+        if prod:
+            publisher = MultiAccountBlueSkyPublisher()
+            
+            for account in bluesky_config.get('accounts', []):
+                print(f"\n🦋 Posting to Bluesky @{account}...")
+                
+                if 'thread' in bluesky_config:
+                    # Post as thread
+                    if prod:
+                        result = publisher.post_thread(
+                            posts=bluesky_config['thread'],
+                            account=account,
+                            images=bluesky_config.get('images')
+                        )
+                        if result['success']:
+                            print(f"✅ Posted thread: {result['thread_url']}")
+                        else:
+                            print(f"❌ Failed: {result.get('error')}")
+                    else:
+                        print("[DRY RUN] Would post thread:")
+                        for i, post_text in enumerate(bluesky_config['thread'], 1):
+                            print(f"  [{i}] {post_text}")
+                
+                elif 'post' in bluesky_config:
+                    # Single post
+                    if prod:
+                        result = publisher.post(
+                            text=bluesky_config['post'],
+                            account=account,
+                            images=bluesky_config.get('images')
+                        )
+                        if result['success']:
+                            print(f"✅ Posted: {result['url']}")
+                        else:
+                            print(f"❌ Failed: {result.get('error')}")
+                    else:
+                        print(f"[DRY RUN] Would post: {bluesky_config['post']}")
+        else:
+            print("\n[DRY RUN] Bluesky posts:")
+            for account in bluesky_config.get('accounts', []):
+                print(f"  @{account}:")
+                if 'thread' in bluesky_config:
+                    for i, post_text in enumerate(bluesky_config['thread'], 1):
+                        print(f"    [{i}] {post_text}")
+                elif 'post' in bluesky_config:
+                    print(f"    {bluesky_config['post']}")
     
     # Process LinkedIn posts
     if 'linkedin' in post.get('platforms', {}):

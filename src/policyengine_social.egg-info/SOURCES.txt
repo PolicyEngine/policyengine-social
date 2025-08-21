@@ -11,6 +11,7 @@ src/policyengine_social.egg-info/dependency_links.txt
 src/policyengine_social.egg-info/entry_points.txt
 src/policyengine_social.egg-info/requires.txt
 src/policyengine_social.egg-info/top_level.txt
+src/policyengine_social/publishers/bluesky.py
 src/policyengine_social/publishers/linkedin.py
 src/policyengine_social/publishers/x_multi.py
 src/policyengine_social/publishers/zapier.py

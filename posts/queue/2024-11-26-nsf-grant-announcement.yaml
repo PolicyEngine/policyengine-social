@@ -23,6 +23,20 @@ platforms:
     images:
       - "assets/cache/nsf-official-logo.png"
   
+  bluesky:
+    # Post to Bluesky account(s)
+    accounts:
+      - policyengineus  # Or policyengine for main account
+    
+    # Thread for Bluesky (300 char limit per post)
+    thread:
+      - "🎉 PolicyEngine has been awarded a $300,000 Phase I POSE grant from NSF (Award No. 2518372) to expand our open-source platform, build sustainable governance, and grow our contributor community. We're grateful for NSF's support in democratizing policy analysis!"
+      - "Read more about our plans and the grant details: https://policyengine.org/us/research/nsf-pose-phase-1-grant"
+    
+    # Same images as X
+    images:
+      - "assets/cache/nsf-official-logo.png"
+  
   linkedin:
     content: |
       Exciting announcement! PolicyEngine has been awarded a $300,000 Phase I POSE grant from the National Science Foundation (Award No. 2518372).
