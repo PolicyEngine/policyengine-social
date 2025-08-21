@@ -10,9 +10,9 @@ tags: ["announcement", "grant", "nsf", "funding"]
 # Content for each platform
 platforms:
   x:
-    # Post to main account for general announcement
+    # Post to US account since NSF is US-specific grant
     accounts: 
-      - thepolicyengine
+      - policyengineus
     
     # Thread for X
     thread:
