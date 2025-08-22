@@ -231,18 +231,18 @@ class MultiAccountXPublisher:
 
         return results
 
-    def retweet(
+    def repost(
         self,
         tweet_id: str,
         from_account: AccountName,
         to_accounts: List[AccountName],
     ) -> Dict:
-        """Retweet a post from one account to other accounts.
+        """Repost a post from one account to other accounts.
         
         Args:
-            tweet_id: ID of the tweet to retweet
+            tweet_id: ID of the tweet to repost
             from_account: Account that posted the original tweet
-            to_accounts: List of accounts that should retweet
+            to_accounts: List of accounts that should repost
             
         Returns:
             Dict of results by account
@@ -259,21 +259,21 @@ class MultiAccountXPublisher:
                 
             try:
                 client = self.clients[account]
-                # Retweet using the X API
+                # Repost using the X API (called retweet in the API)
                 response = client.retweet(tweet_id)
                 results[account] = {
                     "success": True,
                     "account": account,
-                    "retweeted_id": tweet_id,
+                    "reposted_id": tweet_id,
                     "from_account": from_account,
                 }
-                logger.info(f"@{account} retweeted {tweet_id} from @{from_account}")
+                logger.info(f"@{account} reposted {tweet_id} from @{from_account}")
                 
-                # Small delay between retweets
+                # Small delay between reposts
                 time.sleep(1)
                 
             except Exception as e:
-                logger.error(f"Error retweeting from @{account}: {e}")
+                logger.error(f"Error reposting from @{account}: {e}")
                 results[account] = {
                     "success": False,
                     "account": account,

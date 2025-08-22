@@ -39,10 +39,10 @@ def publish_post(filepath, prod=False):
     if 'x' in post.get('platforms', {}):
         x_config = post['platforms']['x']
         
-        # Handle new format with post_from and retweet_from
+        # Handle new format with post_from and repost_from
         if 'post_from' in x_config:
             main_account = x_config['post_from']
-            retweet_accounts = x_config.get('retweet_from', [])
+            repost_accounts = x_config.get('repost_from', [])
             
             if prod:
                 publisher = MultiAccountXPublisher()
@@ -60,18 +60,18 @@ def publish_post(filepath, prod=False):
                         print(f"✅ Posted thread: {result['thread_url']}")
                         tweet_id = result['posts'][0]['tweet_id']  # First tweet of thread
                         
-                        # Retweet from other accounts
-                        if retweet_accounts:
-                            print(f"\n🔄 Retweeting from other accounts...")
-                            time.sleep(2)  # Wait a bit before retweeting
-                            retweet_results = publisher.retweet(
+                        # Repost from other accounts
+                        if repost_accounts:
+                            print(f"\n🔄 Reposting from other accounts...")
+                            time.sleep(2)  # Wait a bit before reposting
+                            repost_results = publisher.repost(
                                 tweet_id=tweet_id,
                                 from_account=main_account,
-                                to_accounts=retweet_accounts
+                                to_accounts=repost_accounts
                             )
-                            for acc, res in retweet_results.items():
+                            for acc, res in repost_results.items():
                                 if res['success']:
-                                    print(f"  ✅ @{acc} retweeted")
+                                    print(f"  ✅ @{acc} reposted")
                                 else:
                                     print(f"  ❌ @{acc} failed: {res.get('error')}")
                     else:
@@ -87,18 +87,18 @@ def publish_post(filepath, prod=False):
                         print(f"✅ Posted: {result['url']}")
                         tweet_id = result['tweet_id']
                         
-                        # Retweet from other accounts
-                        if retweet_accounts:
-                            print(f"\n🔄 Retweeting from other accounts...")
-                            time.sleep(2)  # Wait a bit before retweeting
-                            retweet_results = publisher.retweet(
+                        # Repost from other accounts
+                        if repost_accounts:
+                            print(f"\n🔄 Reposting from other accounts...")
+                            time.sleep(2)  # Wait a bit before reposting
+                            repost_results = publisher.repost(
                                 tweet_id=tweet_id,
                                 from_account=main_account,
-                                to_accounts=retweet_accounts
+                                to_accounts=repost_accounts
                             )
-                            for acc, res in retweet_results.items():
+                            for acc, res in repost_results.items():
                                 if res['success']:
-                                    print(f"  ✅ @{acc} retweeted")
+                                    print(f"  ✅ @{acc} reposted")
                                 else:
                                     print(f"  ❌ @{acc} failed: {res.get('error')}")
                     else:
@@ -111,8 +111,8 @@ def publish_post(filepath, prod=False):
                         print(f"    [{i}] {tweet}")
                 elif 'post' in x_config:
                     print(f"    {x_config['post']}")
-                if retweet_accounts:
-                    print(f"  Then retweet from: {', '.join(['@' + acc for acc in retweet_accounts])}")
+                if repost_accounts:
+                    print(f"  Then repost from: {', '.join(['@' + acc for acc in repost_accounts])}")
         
         # Legacy format with accounts list
         elif 'accounts' in x_config:

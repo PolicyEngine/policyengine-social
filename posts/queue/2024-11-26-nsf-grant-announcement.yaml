@@ -10,9 +10,9 @@ tags: ["announcement", "grant", "nsf", "funding"]
 # Content for each platform
 platforms:
   x:
-    # Post from US account, then retweet from main and UK
+    # Post from US account, then repost from main and UK
     post_from: policyengineus
-    retweet_from:
+    repost_from:
       - thepolicyengine
       - policyengineuk
     
