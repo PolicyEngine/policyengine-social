@@ -36,9 +36,9 @@ platforms:
     thread:
       - "🎉 PolicyEngine has been awarded a $300,000 Phase I POSE grant from NSF (Award No. 2518372) to expand our open-source platform, build sustainable governance, and grow our contributor community! https://policyengine.org/us/research/nsf-pose-phase-1-grant"
     
-    # Same images as X
-    images:
-      - "assets/cache/nsf-official-logo.png"
+    # No images - let link preview show instead
+    # images:
+    #   - "assets/cache/nsf-official-logo.png"
   
   linkedin:
     content: |
