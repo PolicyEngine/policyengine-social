@@ -1,6 +1,7 @@
 README.md
 pyproject.toml
 src/policyengine_social/__init__.py
+src/policyengine_social/cli.py
 src/policyengine_social/extract.py
 src/policyengine_social/generate.py
 src/policyengine_social/publish.py
@@ -10,6 +11,10 @@ src/policyengine_social.egg-info/dependency_links.txt
 src/policyengine_social.egg-info/entry_points.txt
 src/policyengine_social.egg-info/requires.txt
 src/policyengine_social.egg-info/top_level.txt
+src/policyengine_social/publishers/bluesky.py
+src/policyengine_social/publishers/linkedin.py
+src/policyengine_social/publishers/x_multi.py
+src/policyengine_social/publishers/zapier.py
 tests/test_all.py
 tests/test_extract_blog_images.py
 tests/test_generate_social_post.py

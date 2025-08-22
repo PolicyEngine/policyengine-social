@@ -1,0 +1,115 @@
+name: Post to Social Media
+
+on:
+  workflow_dispatch:
+    inputs:
+      blog_url:
+        description: 'Blog post URL'
+        required: false
+      message:
+        description: 'Custom message to post'
+        required: false
+      platform:
+        description: 'Platform to post to'
+        required: true
+        default: 'x'
+        type: choice
+        options:
+          - x
+          - linkedin
+          - all
+      account:
+        description: 'X account to use'
+        required: false
+        default: 'auto'
+        type: choice
+        options:
+          - auto
+          - thepolicyengine
+          - policyengineus
+          - policyengineuk
+          - all
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        pip install -e .
+    
+    - name: Create X config from secrets
+      if: ${{ inputs.platform == 'x' || inputs.platform == 'all' }}
+      run: |
+        mkdir -p config
+        cat > config/x_accounts.yaml << EOF
+        accounts:
+          thepolicyengine:
+            api_key: "${{ secrets.X_POLICYENGINE_API_KEY }}"
+            api_secret: "${{ secrets.X_POLICYENGINE_API_SECRET }}"
+            access_token: "${{ secrets.X_POLICYENGINE_ACCESS_TOKEN }}"
+            access_token_secret: "${{ secrets.X_POLICYENGINE_ACCESS_TOKEN_SECRET }}"
+          policyengineus:
+            api_key: "${{ secrets.X_POLICYENGINEUS_API_KEY }}"
+            api_secret: "${{ secrets.X_POLICYENGINEUS_API_SECRET }}"
+            access_token: "${{ secrets.X_POLICYENGINEUS_ACCESS_TOKEN }}"
+            access_token_secret: "${{ secrets.X_POLICYENGINEUS_ACCESS_TOKEN_SECRET }}"
+          policyengineuk:
+            api_key: "${{ secrets.X_POLICYENGINEUK_API_KEY }}"
+            api_secret: "${{ secrets.X_POLICYENGINEUK_API_SECRET }}"
+            access_token: "${{ secrets.X_POLICYENGINEUK_ACCESS_TOKEN }}"
+            access_token_secret: "${{ secrets.X_POLICYENGINEUK_ACCESS_TOKEN_SECRET }}"
+        settings:
+          default_account: "thepolicyengine"
+          thread_delay_seconds: 2
+          max_retries: 3
+        routing:
+          by_tag:
+            us: "policyengineus"
+            uk: "policyengineuk"
+            general: "thepolicyengine"
+        EOF
+    
+    - name: Create Zapier config from secrets
+      if: ${{ inputs.platform == 'linkedin' || inputs.platform == 'all' }}
+      run: |
+        cat > config/zapier.yaml << EOF
+        webhooks:
+          policyengine:
+            linkedin: "${{ secrets.ZAPIER_LINKEDIN_WEBHOOK }}"
+            all_platforms: "${{ secrets.ZAPIER_ALL_WEBHOOK }}"
+        EOF
+    
+    - name: Generate and post from blog URL
+      if: ${{ inputs.blog_url }}
+      run: |
+        # Generate posts
+        pe-social generate --url "${{ inputs.blog_url }}" --platform ${{ inputs.platform }} -o posts.yaml
+        
+        # Post to X
+        if [ "${{ inputs.platform }}" = "x" ] || [ "${{ inputs.platform }}" = "all" ]; then
+          if [ "${{ inputs.account }}" = "all" ]; then
+            pe-social batch "$(cat posts.yaml | grep -A1 'posts:' | tail -1 | sed 's/  - //')"
+          else
+            pe-social post-x "$(cat posts.yaml | grep -A1 'posts:' | tail -1 | sed 's/  - //')" --account ${{ inputs.account }}
+          fi
+        fi
+    
+    - name: Post custom message
+      if: ${{ inputs.message }}
+      run: |
+        if [ "${{ inputs.platform }}" = "x" ]; then
+          if [ "${{ inputs.account }}" = "all" ]; then
+            pe-social batch "${{ inputs.message }}"
+          else
+            pe-social post-x "${{ inputs.message }}" --account ${{ inputs.account }}
+          fi
+        fi

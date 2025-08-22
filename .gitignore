@@ -18,9 +18,11 @@ venv/
 # Logs
 *.log
 
-# Sensitive
+# Sensitive - NEVER commit these!
 .env
 config/secrets.yaml
+config/x_accounts.yaml
+config/zapier.yaml
 
 # Test files
 test_*.yaml

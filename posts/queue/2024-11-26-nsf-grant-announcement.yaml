@@ -1,0 +1,75 @@
+# NSF POSE Phase I Grant Announcement
+# Author: MaxGhenis
+# Date: 2024-11-26
+
+title: "NSF POSE Phase I Grant Announcement"
+author: "MaxGhenis"
+date_created: "2024-11-26"
+tags: ["announcement", "grant", "nsf", "funding"]
+
+# Content for each platform
+platforms:
+  x:
+    # Post from US account, then repost from main and UK
+    post_from: policyengineus
+    repost_from:
+      - thepolicyengine
+      - policyengineuk
+    
+    # Thread for X
+    thread:
+      - "🎉 @thepolicyengine has been awarded a $300,000 Phase I POSE grant from @NSF (Award No. 2518372) to expand our open-source platform, build sustainable governance, and grow our contributor community. We're grateful for NSF's support in democratizing policy analysis!"
+      - "Read more about our plans and the grant details: https://policyengine.org/us/research/nsf-pose-phase-1-grant"
+    
+    # Attach NSF logo to first tweet
+    images:
+      - "assets/cache/nsf-official-logo.png"
+  
+  bluesky:
+    # Post from US account, then repost from main and UK
+    post_from: policyengineus
+    repost_from:
+      - policyengine
+      - policyengineuk
+    
+    # Thread for Bluesky (300 char limit per post)
+    thread:
+      - "🎉 PolicyEngine has been awarded a $300,000 Phase I POSE grant from NSF (Award No. 2518372) to expand our open-source platform, build sustainable governance, and grow our contributor community. We're grateful for NSF's support in democratizing policy analysis!"
+      - "Read more about our plans and the grant details: https://policyengine.org/us/research/nsf-pose-phase-1-grant"
+    
+    # Same images as X
+    images:
+      - "assets/cache/nsf-official-logo.png"
+  
+  linkedin:
+    content: |
+      Exciting announcement! PolicyEngine has been awarded a $300,000 Phase I POSE grant from the National Science Foundation (Award No. 2518372).
+      
+      This Pathways to Enable Open-Source Ecosystems grant will enable us to:
+      
+      • Build sustainable governance structures for our open-source platform
+      • Expand our contributor community and mentorship programs
+      • Enhance our tax and benefit simulation capabilities
+      • Develop educational resources for policy analysts and researchers
+      
+      We're grateful to NSF for supporting our mission to democratize policy analysis through open-source tools. This funding will help us make evidence-based policy modeling more accessible to researchers, policymakers, and citizens.
+      
+      Learn more about our plans and the impact this grant will have on our work: https://policyengine.org/us/research/nsf-pose-phase-1-grant
+      
+      #OpenSource #PolicyAnalysis #NSF #TechForGood #OpenScience
+    
+    article_url: "https://policyengine.org/us/research/nsf-pose-phase-1-grant"
+
+# Review checklist (for PR description)
+review_checklist:
+  - "Content accurately reflects the grant award"
+  - "NSF Award number (2518372) is correct"
+  - "Link to blog post is working"
+  - "NSF logo is attached for X post"
+  - "Tone is professional and grateful"
+  - "No confidential information included"
+
+# Publishing settings
+publish:
+  schedule: "immediate"
+  require_manual_trigger: false

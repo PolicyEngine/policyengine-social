@@ -1,0 +1,50 @@
+# X (Twitter) Account Configuration
+# Copy this to x_accounts.yaml and fill in your API credentials
+# Get these from: https://developer.twitter.com/en/portal/projects-and-apps
+
+accounts:
+  # Main PolicyEngine account
+  thepolicyengine:
+    api_key: "YOUR_API_KEY"
+    api_secret: "YOUR_API_SECRET"
+    access_token: "YOUR_ACCESS_TOKEN"
+    access_token_secret: "YOUR_ACCESS_TOKEN_SECRET"
+    description: "Main PolicyEngine account for general updates"
+    
+  # US-specific PolicyEngine account  
+  policyengineus:
+    api_key: "YOUR_API_KEY"
+    api_secret: "YOUR_API_SECRET"
+    access_token: "YOUR_ACCESS_TOKEN"
+    access_token_secret: "YOUR_ACCESS_TOKEN_SECRET"
+    description: "US-specific policy analysis and updates"
+    
+  # UK-specific PolicyEngine account
+  policyengineuk:
+    api_key: "YOUR_API_KEY"
+    api_secret: "YOUR_API_SECRET"
+    access_token: "YOUR_ACCESS_TOKEN"
+    access_token_secret: "YOUR_ACCESS_TOKEN_SECRET"
+    description: "UK-specific policy analysis and updates"
+
+# Default settings
+settings:
+  default_account: "thepolicyengine"
+  thread_delay_seconds: 2
+  max_retries: 3
+  
+# Content routing rules (which account posts what)
+routing:
+  # Route by content tags/keywords
+  by_tag:
+    us: "policyengineus"
+    uk: "policyengineuk"
+    canada: "thepolicyengine"  # Use main for other countries
+    general: "thepolicyengine"
+    
+  # Route by blog post category
+  by_category:
+    "us-analysis": "policyengineus"
+    "uk-analysis": "policyengineuk"
+    "feature-announcement": "thepolicyengine"
+    "research": "thepolicyengine"

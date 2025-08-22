@@ -12,6 +12,6 @@ from .publish import XPublisher
 
 __all__ = [
     "BlogImageExtractor",
-    "SocialPostGenerator", 
+    "SocialPostGenerator",
     "XPublisher",
 ]
