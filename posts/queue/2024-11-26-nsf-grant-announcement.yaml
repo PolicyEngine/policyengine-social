@@ -10,9 +10,11 @@ tags: ["announcement", "grant", "nsf", "funding"]
 # Content for each platform
 platforms:
   x:
-    # Post to US account since NSF is US-specific grant
-    accounts: 
-      - policyengineus
+    # Post from US account, then retweet from main and UK
+    post_from: policyengineus
+    retweet_from:
+      - thepolicyengine
+      - policyengineuk
     
     # Thread for X
     thread:
@@ -24,9 +26,11 @@ platforms:
       - "assets/cache/nsf-official-logo.png"
   
   bluesky:
-    # Post to Bluesky account(s)
-    accounts:
-      - policyengineus  # Or policyengine for main account
+    # Post from US account, then repost from main and UK
+    post_from: policyengineus
+    repost_from:
+      - policyengine
+      - policyengineuk
     
     # Thread for Bluesky (300 char limit per post)
     thread:

@@ -9,6 +9,7 @@ import yaml
 import argparse
 from pathlib import Path
 import os
+import time
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
@@ -38,15 +39,90 @@ def publish_post(filepath, prod=False):
     if 'x' in post.get('platforms', {}):
         x_config = post['platforms']['x']
         
-        if prod:
-            publisher = MultiAccountXPublisher()
+        # Handle new format with post_from and retweet_from
+        if 'post_from' in x_config:
+            main_account = x_config['post_from']
+            retweet_accounts = x_config.get('retweet_from', [])
             
-            for account in x_config.get('accounts', []):
-                print(f"\n🐦 Posting to @{account}...")
+            if prod:
+                publisher = MultiAccountXPublisher()
+                
+                # Post from main account
+                print(f"\n🐦 Posting to @{main_account}...")
                 
                 if 'thread' in x_config:
-                    # Post as thread
-                    if prod:
+                    result = publisher.post_thread(
+                        posts=x_config['thread'],
+                        account=main_account,
+                        images=x_config.get('images')
+                    )
+                    if result['success']:
+                        print(f"✅ Posted thread: {result['thread_url']}")
+                        tweet_id = result['posts'][0]['tweet_id']  # First tweet of thread
+                        
+                        # Retweet from other accounts
+                        if retweet_accounts:
+                            print(f"\n🔄 Retweeting from other accounts...")
+                            time.sleep(2)  # Wait a bit before retweeting
+                            retweet_results = publisher.retweet(
+                                tweet_id=tweet_id,
+                                from_account=main_account,
+                                to_accounts=retweet_accounts
+                            )
+                            for acc, res in retweet_results.items():
+                                if res['success']:
+                                    print(f"  ✅ @{acc} retweeted")
+                                else:
+                                    print(f"  ❌ @{acc} failed: {res.get('error')}")
+                    else:
+                        print(f"❌ Failed: {result.get('error')}")
+                
+                elif 'post' in x_config:
+                    result = publisher.post(
+                        text=x_config['post'],
+                        account=main_account,
+                        images=x_config.get('images')
+                    )
+                    if result['success']:
+                        print(f"✅ Posted: {result['url']}")
+                        tweet_id = result['tweet_id']
+                        
+                        # Retweet from other accounts
+                        if retweet_accounts:
+                            print(f"\n🔄 Retweeting from other accounts...")
+                            time.sleep(2)  # Wait a bit before retweeting
+                            retweet_results = publisher.retweet(
+                                tweet_id=tweet_id,
+                                from_account=main_account,
+                                to_accounts=retweet_accounts
+                            )
+                            for acc, res in retweet_results.items():
+                                if res['success']:
+                                    print(f"  ✅ @{acc} retweeted")
+                                else:
+                                    print(f"  ❌ @{acc} failed: {res.get('error')}")
+                    else:
+                        print(f"❌ Failed: {result.get('error')}")
+            else:
+                print("[DRY RUN] X posts:")
+                print(f"  Post from @{main_account}:")
+                if 'thread' in x_config:
+                    for i, tweet in enumerate(x_config['thread'], 1):
+                        print(f"    [{i}] {tweet}")
+                elif 'post' in x_config:
+                    print(f"    {x_config['post']}")
+                if retweet_accounts:
+                    print(f"  Then retweet from: {', '.join(['@' + acc for acc in retweet_accounts])}")
+        
+        # Legacy format with accounts list
+        elif 'accounts' in x_config:
+            if prod:
+                publisher = MultiAccountXPublisher()
+                
+                for account in x_config.get('accounts', []):
+                    print(f"\n🐦 Posting to @{account}...")
+                    
+                    if 'thread' in x_config:
                         result = publisher.post_thread(
                             posts=x_config['thread'],
                             account=account,
@@ -56,14 +132,8 @@ def publish_post(filepath, prod=False):
                             print(f"✅ Posted thread: {result['thread_url']}")
                         else:
                             print(f"❌ Failed: {result.get('error')}")
-                    else:
-                        print("[DRY RUN] Would post thread:")
-                        for i, tweet in enumerate(x_config['thread'], 1):
-                            print(f"  [{i}] {tweet}")
-                
-                elif 'post' in x_config:
-                    # Single post
-                    if prod:
+                    
+                    elif 'post' in x_config:
                         result = publisher.post(
                             text=x_config['post'],
                             account=account,
@@ -73,31 +143,104 @@ def publish_post(filepath, prod=False):
                             print(f"✅ Posted: {result['url']}")
                         else:
                             print(f"❌ Failed: {result.get('error')}")
-                    else:
-                        print(f"[DRY RUN] Would post: {x_config['post']}")
-        else:
-            print("[DRY RUN] X posts:")
-            for account in x_config.get('accounts', []):
-                print(f"  @{account}:")
-                if 'thread' in x_config:
-                    for i, tweet in enumerate(x_config['thread'], 1):
-                        print(f"    [{i}] {tweet}")
-                elif 'post' in x_config:
-                    print(f"    {x_config['post']}")
+            else:
+                print("[DRY RUN] X posts:")
+                for account in x_config.get('accounts', []):
+                    print(f"  @{account}:")
+                    if 'thread' in x_config:
+                        for i, tweet in enumerate(x_config['thread'], 1):
+                            print(f"    [{i}] {tweet}")
+                    elif 'post' in x_config:
+                        print(f"    {x_config['post']}")
     
     # Process Bluesky posts
     if 'bluesky' in post.get('platforms', {}):
         bluesky_config = post['platforms']['bluesky']
         
-        if prod:
-            publisher = MultiAccountBlueSkyPublisher()
+        # Handle new format with post_from and repost_from
+        if 'post_from' in bluesky_config:
+            main_account = bluesky_config['post_from']
+            repost_accounts = bluesky_config.get('repost_from', [])
             
-            for account in bluesky_config.get('accounts', []):
-                print(f"\n🦋 Posting to Bluesky @{account}...")
+            if prod:
+                publisher = MultiAccountBlueSkyPublisher()
+                
+                # Post from main account
+                print(f"\n🦋 Posting to Bluesky @{main_account}...")
                 
                 if 'thread' in bluesky_config:
-                    # Post as thread
-                    if prod:
+                    result = publisher.post_thread(
+                        posts=bluesky_config['thread'],
+                        account=main_account,
+                        images=bluesky_config.get('images')
+                    )
+                    if result['success']:
+                        print(f"✅ Posted thread: {result['thread_url']}")
+                        post_uri = result['posts'][0]['uri']  # First post of thread
+                        
+                        # Repost from other accounts
+                        if repost_accounts:
+                            print(f"\n🔄 Reposting from other accounts...")
+                            time.sleep(2)  # Wait a bit before reposting
+                            repost_results = publisher.repost(
+                                uri=post_uri,
+                                from_account=main_account,
+                                to_accounts=repost_accounts
+                            )
+                            for acc, res in repost_results.items():
+                                if res['success']:
+                                    print(f"  ✅ @{acc} reposted")
+                                else:
+                                    print(f"  ❌ @{acc} failed: {res.get('error')}")
+                    else:
+                        print(f"❌ Failed: {result.get('error')}")
+                
+                elif 'post' in bluesky_config:
+                    result = publisher.post(
+                        text=bluesky_config['post'],
+                        account=main_account,
+                        images=bluesky_config.get('images')
+                    )
+                    if result['success']:
+                        print(f"✅ Posted: {result['url']}")
+                        post_uri = result['uri']
+                        
+                        # Repost from other accounts
+                        if repost_accounts:
+                            print(f"\n🔄 Reposting from other accounts...")
+                            time.sleep(2)  # Wait a bit before reposting
+                            repost_results = publisher.repost(
+                                uri=post_uri,
+                                from_account=main_account,
+                                to_accounts=repost_accounts
+                            )
+                            for acc, res in repost_results.items():
+                                if res['success']:
+                                    print(f"  ✅ @{acc} reposted")
+                                else:
+                                    print(f"  ❌ @{acc} failed: {res.get('error')}")
+                    else:
+                        print(f"❌ Failed: {result.get('error')}")
+            else:
+                print("\n[DRY RUN] Bluesky posts:")
+                print(f"  Post from @{main_account}:")
+                if 'thread' in bluesky_config:
+                    for i, post_text in enumerate(bluesky_config['thread'], 1):
+                        print(f"    [{i}] {post_text}")
+                elif 'post' in bluesky_config:
+                    print(f"    {bluesky_config['post']}")
+                if repost_accounts:
+                    print(f"  Then repost from: {', '.join(['@' + acc for acc in repost_accounts])}")
+        
+        # Legacy format with accounts list
+        elif 'accounts' in bluesky_config:
+            if prod:
+                publisher = MultiAccountBlueSkyPublisher()
+                
+                for account in bluesky_config.get('accounts', []):
+                    print(f"\n🦋 Posting to Bluesky @{account}...")
+                    
+                    if 'thread' in bluesky_config:
                         result = publisher.post_thread(
                             posts=bluesky_config['thread'],
                             account=account,
@@ -107,14 +250,8 @@ def publish_post(filepath, prod=False):
                             print(f"✅ Posted thread: {result['thread_url']}")
                         else:
                             print(f"❌ Failed: {result.get('error')}")
-                    else:
-                        print("[DRY RUN] Would post thread:")
-                        for i, post_text in enumerate(bluesky_config['thread'], 1):
-                            print(f"  [{i}] {post_text}")
-                
-                elif 'post' in bluesky_config:
-                    # Single post
-                    if prod:
+                    
+                    elif 'post' in bluesky_config:
                         result = publisher.post(
                             text=bluesky_config['post'],
                             account=account,
@@ -124,17 +261,15 @@ def publish_post(filepath, prod=False):
                             print(f"✅ Posted: {result['url']}")
                         else:
                             print(f"❌ Failed: {result.get('error')}")
-                    else:
-                        print(f"[DRY RUN] Would post: {bluesky_config['post']}")
-        else:
-            print("\n[DRY RUN] Bluesky posts:")
-            for account in bluesky_config.get('accounts', []):
-                print(f"  @{account}:")
-                if 'thread' in bluesky_config:
-                    for i, post_text in enumerate(bluesky_config['thread'], 1):
-                        print(f"    [{i}] {post_text}")
-                elif 'post' in bluesky_config:
-                    print(f"    {bluesky_config['post']}")
+            else:
+                print("\n[DRY RUN] Bluesky posts:")
+                for account in bluesky_config.get('accounts', []):
+                    print(f"  @{account}:")
+                    if 'thread' in bluesky_config:
+                        for i, post_text in enumerate(bluesky_config['thread'], 1):
+                            print(f"    [{i}] {post_text}")
+                    elif 'post' in bluesky_config:
+                        print(f"    {bluesky_config['post']}")
     
     # Process LinkedIn posts
     if 'linkedin' in post.get('platforms', {}):

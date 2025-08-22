@@ -174,6 +174,53 @@ class BlueSkyPublisher:
             "posts": results,
             "thread_url": results[0]["url"] if results else None
         }
+    
+    def repost(self, uri: str) -> Dict:
+        """Repost another post.
+        
+        Args:
+            uri: AT URI of the post to repost
+            
+        Returns:
+            Dict with success status and repost info
+        """
+        try:
+            # Parse the URI to get the necessary components
+            # URI format: at://did:plc:xxxxx/app.bsky.feed.post/xxxxx
+            parts = uri.replace("at://", "").split("/")
+            if len(parts) < 3:
+                return {"success": False, "error": "Invalid URI format"}
+            
+            repo = parts[0]
+            collection = parts[1]
+            rkey = parts[2]
+            
+            # Create the repost
+            repost_record = {
+                "$type": "app.bsky.feed.repost",
+                "subject": {
+                    "uri": uri,
+                    "cid": None  # CID would be fetched from the original post
+                },
+                "createdAt": self.client.get_current_time_iso()
+            }
+            
+            response = self.client.send_post(
+                text="",  # Reposts don't have text
+                reply_to=None,
+                embed=repost_record
+            )
+            
+            logger.info(f"Successfully reposted: {uri}")
+            return {
+                "success": True,
+                "uri": response.uri,
+                "reposted_uri": uri
+            }
+            
+        except Exception as e:
+            logger.error(f"Error reposting: {e}")
+            return {"success": False, "error": str(e)}
 
 
 class MultiAccountBlueSkyPublisher:
@@ -224,3 +271,33 @@ class MultiAccountBlueSkyPublisher:
             return {"success": False, "error": f"Account {account} not configured"}
         
         return self.accounts[account].post_thread(posts, **kwargs)
+    
+    def repost(self, uri: str, from_account: str, to_accounts: List[str]) -> Dict:
+        """Repost from one account to other accounts.
+        
+        Args:
+            uri: AT URI of the post to repost
+            from_account: Account that posted the original
+            to_accounts: List of accounts that should repost
+            
+        Returns:
+            Dict of results by account
+        """
+        results = {}
+        
+        for account in to_accounts:
+            if account not in self.accounts:
+                results[account] = {
+                    "success": False,
+                    "error": f"Account {account} not configured"
+                }
+                continue
+            
+            result = self.accounts[account].repost(uri)
+            result["from_account"] = from_account
+            results[account] = result
+            
+            # Small delay between reposts
+            time.sleep(1)
+        
+        return results
