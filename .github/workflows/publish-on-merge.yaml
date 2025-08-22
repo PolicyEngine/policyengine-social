@@ -30,7 +30,13 @@ jobs:
       id: posts
       run: |
         # Get list of added/modified YAML files in posts/queue
-        echo "files=$(git diff --name-only HEAD HEAD~1 | grep '^posts/queue/.*\.yaml$' | tr '\n' ' ')" >> $GITHUB_OUTPUT
+        # Check if HEAD~1 exists, otherwise use empty tree
+        if git rev-parse HEAD~1 >/dev/null 2>&1; then
+          echo "files=$(git diff --name-only HEAD HEAD~1 | grep '^posts/queue/.*\.yaml$' | tr '\n' ' ')" >> $GITHUB_OUTPUT
+        else
+          # First commit - get all files in posts/queue
+          echo "files=$(git ls-tree -r --name-only HEAD | grep '^posts/queue/.*\.yaml$' | tr '\n' ' ')" >> $GITHUB_OUTPUT
+        fi
     
     - name: Validate posts
       run: |
