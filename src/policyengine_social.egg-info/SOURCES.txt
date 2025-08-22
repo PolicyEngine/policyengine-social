@@ -16,6 +16,8 @@ src/policyengine_social/publishers/linkedin.py
 src/policyengine_social/publishers/x_multi.py
 src/policyengine_social/publishers/zapier.py
 tests/test_all.py
+tests/test_bluesky_images.py
+tests/test_bluesky_link_preview.py
 tests/test_extract_blog_images.py
 tests/test_generate_social_post.py
 tests/test_publish_to_x.py

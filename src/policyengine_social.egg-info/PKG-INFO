@@ -30,6 +30,7 @@ Requires-Dist: markdown>=3.4.4
 Requires-Dist: pytz>=2023.3
 Requires-Dist: Pillow>=10.0.0
 Requires-Dist: python-dotenv>=1.0.0
+Requires-Dist: atproto>=0.0.55
 Provides-Extra: dev
 Requires-Dist: pytest>=7.4.0; extra == "dev"
 Requires-Dist: pytest-cov>=4.1.0; extra == "dev"

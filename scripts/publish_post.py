@@ -177,6 +177,7 @@ def publish_post(filepath, prod=False):
                     if result['success']:
                         print(f"✅ Posted thread: {result['thread_url']}")
                         post_uri = result['posts'][0]['uri']  # First post of thread
+                        post_cid = result['posts'][0].get('cid')  # CID of first post
                         
                         # Repost from other accounts
                         if repost_accounts:
@@ -184,6 +185,7 @@ def publish_post(filepath, prod=False):
                             time.sleep(2)  # Wait a bit before reposting
                             repost_results = publisher.repost(
                                 uri=post_uri,
+                                cid=post_cid,
                                 from_account=main_account,
                                 to_accounts=repost_accounts
                             )
@@ -204,6 +206,7 @@ def publish_post(filepath, prod=False):
                     if result['success']:
                         print(f"✅ Posted: {result['url']}")
                         post_uri = result['uri']
+                        post_cid = result.get('cid')
                         
                         # Repost from other accounts
                         if repost_accounts:
@@ -211,6 +214,7 @@ def publish_post(filepath, prod=False):
                             time.sleep(2)  # Wait a bit before reposting
                             repost_results = publisher.repost(
                                 uri=post_uri,
+                                cid=post_cid,
                                 from_account=main_account,
                                 to_accounts=repost_accounts
                             )
