@@ -85,7 +85,7 @@ class BlueSkyPublisher:
                     embed = {
                         "$type": "app.bsky.embed.images",
                         "images": [
-                            {"alt": alt, "image": img.to_dict()}
+                            {"alt": alt, "image": img.model_dump()}
                             for alt, img in zip(image_alts, uploaded_images)
                         ]
                     }
