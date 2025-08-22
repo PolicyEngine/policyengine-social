@@ -32,10 +32,9 @@ platforms:
       - policyengine
       - policyengineuk
     
-    # Thread for Bluesky (300 char limit per post)
+    # Single post with link (link preview will be generated)
     thread:
-      - "🎉 PolicyEngine has been awarded a $300,000 Phase I POSE grant from NSF (Award No. 2518372) to expand our open-source platform, build sustainable governance, and grow our contributor community. We're grateful for NSF's support in democratizing policy analysis!"
-      - "Read more about our plans and the grant details: https://policyengine.org/us/research/nsf-pose-phase-1-grant"
+      - "🎉 PolicyEngine has been awarded a $300,000 Phase I POSE grant from NSF (Award No. 2518372) to expand our open-source platform, build sustainable governance, and grow our contributor community! https://policyengine.org/us/research/nsf-pose-phase-1-grant"
     
     # Same images as X
     images:

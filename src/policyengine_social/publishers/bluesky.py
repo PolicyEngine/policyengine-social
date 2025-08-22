@@ -1,10 +1,13 @@
 """Bluesky publisher for PolicyEngine social media posts."""
 
 import os
+import re
 import logging
 from typing import Dict, List, Optional
 from atproto import Client, client_utils
 import time
+import requests
+from bs4 import BeautifulSoup
 
 logger = logging.getLogger(__name__)
 
@@ -36,18 +39,99 @@ class BlueSkyPublisher:
             logger.error(f"Failed to login to Bluesky: {e}")
             raise
     
+    def _extract_urls(self, text: str) -> List[str]:
+        """Extract URLs from text.
+        
+        Args:
+            text: Text to extract URLs from
+            
+        Returns:
+            List of URLs found in text
+        """
+        # Regex pattern for URLs
+        url_pattern = r'https?://[^\s<>"{}|\\^`\[\]]+'
+        urls = re.findall(url_pattern, text)
+        return urls
+    
+    def _fetch_url_metadata(self, url: str) -> Dict[str, Optional[str]]:
+        """Fetch Open Graph metadata from URL.
+        
+        Args:
+            url: URL to fetch metadata from
+            
+        Returns:
+            Dict with title, description, and image URL
+        """
+        metadata = {
+            'title': None,
+            'description': None,
+            'image': None
+        }
+        
+        try:
+            # Fetch the page
+            response = requests.get(url, timeout=10, headers={
+                'User-Agent': 'Mozilla/5.0 (compatible; PolicyEngine/1.0)'
+            })
+            response.raise_for_status()
+            
+            # Parse HTML
+            soup = BeautifulSoup(response.text, 'html.parser')
+            
+            # Try Open Graph tags first
+            og_title = soup.find('meta', property='og:title')
+            if og_title:
+                metadata['title'] = og_title.get('content')
+            
+            og_description = soup.find('meta', property='og:description')
+            if og_description:
+                metadata['description'] = og_description.get('content')
+            
+            og_image = soup.find('meta', property='og:image')
+            if og_image:
+                metadata['image'] = og_image.get('content')
+            
+            # Fallback to regular meta tags and title
+            if not metadata['title']:
+                title_tag = soup.find('title')
+                if title_tag:
+                    metadata['title'] = title_tag.get_text().strip()
+            
+            if not metadata['description']:
+                meta_desc = soup.find('meta', attrs={'name': 'description'})
+                if meta_desc:
+                    metadata['description'] = meta_desc.get('content')
+            
+            # Ensure we have at least a title
+            if not metadata['title']:
+                metadata['title'] = url.split('/')[2]  # Use domain as fallback
+            
+            # Truncate if needed
+            if metadata['title'] and len(metadata['title']) > 100:
+                metadata['title'] = metadata['title'][:97] + '...'
+            
+            if metadata['description'] and len(metadata['description']) > 300:
+                metadata['description'] = metadata['description'][:297] + '...'
+                
+        except Exception as e:
+            logger.warning(f"Failed to fetch metadata for {url}: {e}")
+            # Use URL as title fallback
+            metadata['title'] = url.split('/')[2] if len(url.split('/')) > 2 else url
+        
+        return metadata
+    
     def post(
         self,
         text: str,
         images: Optional[List[str]] = None,
-        reply_to: Optional[str] = None,
+        reply_to: Optional[Dict] = None,
     ) -> Dict:
         """Post to Bluesky.
         
         Args:
             text: Post text (max 300 characters)
             images: Optional list of image paths
-            reply_to: Optional post URI to reply to
+            reply_to: Optional reply reference dict with 'uri' and 'cid'
             
         Returns:
             Response dict with post details
@@ -65,8 +149,10 @@ class BlueSkyPublisher:
             post_builder = client_utils.TextBuilder()
             post_builder.text(text)
             
-            # Handle images if provided
+            # Handle embeds - images take precedence over link previews
             embed = None
+            
+            # 1. Check for explicit images first
             if images:
                 image_alts = []
                 uploaded_images = []
@@ -90,6 +176,40 @@ class BlueSkyPublisher:
                         ]
                     }
             
+            # 2. If no images, check for URLs and create link preview
+            elif not embed:
+                urls = self._extract_urls(text)
+                if urls:
+                    # Use the first URL for preview
+                    url = urls[0]
+                    metadata = self._fetch_url_metadata(url)
+                    
+                    if metadata['title']:
+                        # Create external embed
+                        external_data = {
+                            "uri": url,
+                            "title": metadata['title'],
+                            "description": metadata['description'] or ""
+                        }
+                        
+                        # Add thumbnail if available
+                        if metadata['image']:
+                            try:
+                                # Download and upload thumbnail
+                                img_response = requests.get(metadata['image'], timeout=10)
+                                img_response.raise_for_status()
+                                
+                                # Upload as blob
+                                thumb_upload = self.client.upload_blob(img_response.content)
+                                external_data['thumb'] = thumb_upload.blob.model_dump()
+                            except Exception as e:
+                                logger.warning(f"Failed to upload thumbnail: {e}")
+                        
+                        embed = {
+                            "$type": "app.bsky.embed.external",
+                            "external": external_data
+                        }
+            
             # Create the post
             post_data = {
                 "text": post_builder.build_text(),
@@ -99,15 +219,21 @@ class BlueSkyPublisher:
             if embed:
                 post_data["embed"] = embed
             
+            # Send the post with reply_to if provided
             if reply_to:
-                # Parse reply reference
-                post_data["reply"] = {
-                    "parent": {"uri": reply_to},
-                    "root": {"uri": reply_to}  # Simplified - should track root
-                }
-            
-            # Send the post
-            response = self.client.send_post(**post_data)
+                # reply_to should be a dict with parent and root URIs and CIDs
+                response = self.client.send_post(
+                    text=post_builder.build_text(),
+                    facets=post_builder.build_facets(),
+                    embed=embed,
+                    reply_to={
+                        "parent": {"uri": reply_to["uri"], "cid": reply_to["cid"]},
+                        "root": {"uri": reply_to.get("root_uri", reply_to["uri"]), 
+                                "cid": reply_to.get("root_cid", reply_to["cid"])}
+                    }
+                )
+            else:
+                response = self.client.send_post(**post_data)
             
             logger.info(f"Posted to Bluesky: {response.uri}")
             
@@ -143,23 +269,33 @@ class BlueSkyPublisher:
             return {"success": False, "error": "Not logged in"}
         
         results = []
-        previous_uri = None
-        root_uri = None
+        previous_ref = None
+        root_ref = None
         
         for i, text in enumerate(posts):
             # Only add images to first post
             post_images = images if i == 0 else None
             
+            # Build reply reference if this is not the first post
+            reply_to = None
+            if previous_ref:
+                reply_to = {
+                    "uri": previous_ref["uri"],
+                    "cid": previous_ref["cid"],
+                    "root_uri": root_ref["uri"],
+                    "root_cid": root_ref["cid"]
+                }
+            
             result = self.post(
                 text=text,
                 images=post_images,
-                reply_to=previous_uri
+                reply_to=reply_to
             )
             
             if result["success"]:
                 if i == 0:
-                    root_uri = result["uri"]
-                previous_uri = result["uri"]
+                    root_ref = {"uri": result["uri"], "cid": result["cid"]}
+                previous_ref = {"uri": result["uri"], "cid": result["cid"]}
                 results.append(result)
             else:
                 logger.error(f"Thread interrupted at post {i+1}")
@@ -175,46 +311,48 @@ class BlueSkyPublisher:
             "thread_url": results[0]["url"] if results else None
         }
     
-    def repost(self, uri: str) -> Dict:
+    def repost(self, uri: str, cid: str = None) -> Dict:
         """Repost another post.
         
         Args:
             uri: AT URI of the post to repost
+            cid: CID of the post to repost (optional, will be fetched if not provided)
             
         Returns:
             Dict with success status and repost info
         """
         try:
-            # Parse the URI to get the necessary components
-            # URI format: at://did:plc:xxxxx/app.bsky.feed.post/xxxxx
-            parts = uri.replace("at://", "").split("/")
-            if len(parts) < 3:
-                return {"success": False, "error": "Invalid URI format"}
+            # If CID not provided, we need to fetch it from the original post
+            if not cid:
+                # Parse URI to get the post details
+                # URI format: at://did:plc:xxxxx/app.bsky.feed.post/xxxxx
+                parts = uri.replace("at://", "").split("/")
+                if len(parts) < 3:
+                    return {"success": False, "error": "Invalid URI format"}
+                
+                did = parts[0]  # The DID of the post author
+                rkey = parts[2]  # The post rkey
+                
+                # Fetch the post to get its CID
+                try:
+                    post_response = self.client.get_post(
+                        post_rkey=rkey,
+                        profile_identify=did
+                    )
+                    cid = post_response.cid  # CID is at the response level
+                except Exception as e:
+                    logger.warning(f"Could not fetch CID for {uri}: {e}")
+                    # CID is required for reposts
+                    return {"success": False, "error": f"Could not fetch CID: {e}"}
             
-            repo = parts[0]
-            collection = parts[1]
-            rkey = parts[2]
-            
-            # Create the repost
-            repost_record = {
-                "$type": "app.bsky.feed.repost",
-                "subject": {
-                    "uri": uri,
-                    "cid": None  # CID would be fetched from the original post
-                },
-                "createdAt": self.client.get_current_time_iso()
-            }
-            
-            response = self.client.send_post(
-                text="",  # Reposts don't have text
-                reply_to=None,
-                embed=repost_record
-            )
+            # Use the built-in repost method
+            response = self.client.repost(uri=uri, cid=cid)
             
             logger.info(f"Successfully reposted: {uri}")
             return {
                 "success": True,
                 "uri": response.uri,
+                "cid": response.cid,
                 "reposted_uri": uri
             }
             
@@ -272,11 +410,12 @@ class MultiAccountBlueSkyPublisher:
         
         return self.accounts[account].post_thread(posts, **kwargs)
     
-    def repost(self, uri: str, from_account: str, to_accounts: List[str]) -> Dict:
+    def repost(self, uri: str, cid: str = None, from_account: str = None, to_accounts: List[str] = None) -> Dict:
         """Repost from one account to other accounts.
         
         Args:
             uri: AT URI of the post to repost
+            cid: CID of the post (optional, will be fetched if not provided)
             from_account: Account that posted the original
             to_accounts: List of accounts that should repost
             
@@ -293,8 +432,9 @@ class MultiAccountBlueSkyPublisher:
                 }
                 continue
             
-            result = self.accounts[account].repost(uri)
-            result["from_account"] = from_account
+            result = self.accounts[account].repost(uri, cid)
+            if from_account:
+                result["from_account"] = from_account
             results[account] = result
             
             # Small delay between reposts
