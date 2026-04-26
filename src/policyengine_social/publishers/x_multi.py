@@ -260,7 +260,7 @@ class MultiAccountXPublisher:
             try:
                 client = self.clients[account]
                 # Repost using the X API (called retweet in the API)
-                response = client.retweet(tweet_id)
+                client.retweet(tweet_id)
                 results[account] = {
                     "success": True,
                     "account": account,

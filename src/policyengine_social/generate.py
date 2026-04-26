@@ -4,10 +4,13 @@ Generate social media posts from PolicyEngine blog articles.
 """
 
 import argparse
+import requests  # noqa: F401
 import yaml
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List
+
+from policyengine_social.extract import BlogImageExtractor
 
 
 class SocialPostGenerator:
@@ -36,7 +39,8 @@ class SocialPostGenerator:
         if "grant" in self.slug.lower():
             thread.append(
                 f"🎉 {self.content['title']}\n\n"
-                f"We're excited to share this important update about PolicyEngine's future.\n\n"
+                "We're excited to share this important update about "
+                "PolicyEngine's future.\n\n"
                 f"🧵 Thread:"
             )
         else:
@@ -73,11 +77,13 @@ Key takeaways:
 • Supporting detail or impact
 • Call to action or next steps
 
-This [article/analysis/announcement] demonstrates PolicyEngine's commitment to democratizing policy analysis and making economic modeling accessible to all.
+This [article/analysis/announcement] demonstrates PolicyEngine's commitment to
+democratizing policy analysis and making economic modeling accessible to all.
 
 Read the full article: {self.blog_url}
 
-What are your thoughts on [relevant question]? We'd love to hear your perspective in the comments.
+What are your thoughts on [relevant question]? We'd love to hear your
+perspective in the comments.
 
 #PolicyAnalysis #EconomicModeling #OpenSource #PublicPolicy #DataScience"""
 
@@ -89,15 +95,17 @@ What are your thoughts on [relevant question]? We'd love to hear your perspectiv
         tomorrow = datetime.now() + timedelta(days=1)
         publish_time = tomorrow.replace(hour=10, minute=0, second=0, microsecond=0)
 
-        # Extract images from blog
-        from policyengine_social.extract import BlogImageExtractor
+        try:
+            extractor = BlogImageExtractor(self.slug)
+            images = extractor.extract_images()
 
-        extractor = BlogImageExtractor(self.slug)
-        images = extractor.extract_images()
-
-        # Auto-select images for each platform
-        x_images = extractor.auto_select_images(images, "x")
-        linkedin_images = extractor.auto_select_images(images, "linkedin")
+            # Auto-select images for each platform
+            x_images = extractor.auto_select_images(images, "x")
+            linkedin_images = extractor.auto_select_images(images, "linkedin")
+        except Exception:
+            images = {}
+            x_images = []
+            linkedin_images = []
 
         return {
             "title": self.content["title"],

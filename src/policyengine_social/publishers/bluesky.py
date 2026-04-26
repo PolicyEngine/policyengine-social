@@ -117,7 +117,10 @@ class BlueSkyPublisher:
                 "success": True,
                 "uri": response.uri,
                 "cid": response.cid,
-                "url": f"https://bsky.app/profile/{self.handle}/post/{response.uri.split('/')[-1]}",
+                "url": (
+                    f"https://bsky.app/profile/{self.handle}/post/"
+                    f"{response.uri.split('/')[-1]}"
+                ),
             }
 
         except Exception as e:
@@ -143,7 +146,6 @@ class BlueSkyPublisher:
 
         results = []
         previous_uri = None
-        root_uri = None
 
         for i, text in enumerate(posts):
             # Only add images to first post
@@ -152,8 +154,6 @@ class BlueSkyPublisher:
             result = self.post(text=text, images=post_images, reply_to=previous_uri)
 
             if result["success"]:
-                if i == 0:
-                    root_uri = result["uri"]
                 previous_uri = result["uri"]
                 results.append(result)
             else:
@@ -185,10 +185,6 @@ class BlueSkyPublisher:
             parts = uri.replace("at://", "").split("/")
             if len(parts) < 3:
                 return {"success": False, "error": "Invalid URI format"}
-
-            repo = parts[0]
-            collection = parts[1]
-            rkey = parts[2]
 
             # Create the repost
             repost_record = {
