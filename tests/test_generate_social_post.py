@@ -2,6 +2,7 @@
 """
 Tests for social post generation functionality.
 """
+
 from datetime import datetime
 
 import unittest

@@ -238,25 +238,25 @@ class MultiAccountXPublisher:
         to_accounts: List[AccountName],
     ) -> Dict:
         """Repost a post from one account to other accounts.
-        
+
         Args:
             tweet_id: ID of the tweet to repost
             from_account: Account that posted the original tweet
             to_accounts: List of accounts that should repost
-            
+
         Returns:
             Dict of results by account
         """
         results = {}
-        
+
         for account in to_accounts:
             if account not in self.clients:
                 results[account] = {
-                    "success": False, 
-                    "error": f"Account {account} not configured"
+                    "success": False,
+                    "error": f"Account {account} not configured",
                 }
                 continue
-                
+
             try:
                 client = self.clients[account]
                 # Repost using the X API (called retweet in the API)
@@ -268,18 +268,18 @@ class MultiAccountXPublisher:
                     "from_account": from_account,
                 }
                 logger.info(f"@{account} reposted {tweet_id} from @{from_account}")
-                
+
                 # Small delay between reposts
                 time.sleep(1)
-                
+
             except Exception as e:
                 logger.error(f"Error reposting from @{account}: {e}")
                 results[account] = {
                     "success": False,
                     "account": account,
-                    "error": str(e)
+                    "error": str(e),
                 }
-                
+
         return results
 
     def route_by_content(
