@@ -11,6 +11,8 @@ from datetime import datetime
 import time
 from typing import List, Dict
 
+from policyengine_social.extract import BlogImageExtractor
+
 
 class XPublisher:
     def __init__(self):
@@ -33,6 +35,12 @@ class XPublisher:
 
     def publish_thread(self, thread: List[str], media_files: List[str] = None) -> str:
         """Publish a thread to X."""
+        self.client = tweepy.Client(
+            consumer_key=os.environ.get("X_API_KEY"),
+            consumer_secret=os.environ.get("X_API_SECRET"),
+            access_token=os.environ.get("X_ACCESS_TOKEN"),
+            access_token_secret=os.environ.get("X_ACCESS_SECRET"),
+        )
         tweet_ids = []
 
         for i, tweet_text in enumerate(thread):
@@ -63,7 +71,13 @@ class XPublisher:
 
     def upload_media(self, media_refs: List[str], images_dict: Dict) -> List[str]:
         """Upload media files and return media IDs."""
-        from policyengine_social.extract import BlogImageExtractor
+        auth = tweepy.OAuth1UserHandler(
+            os.environ.get("X_API_KEY"),
+            os.environ.get("X_API_SECRET"),
+            os.environ.get("X_ACCESS_TOKEN"),
+            os.environ.get("X_ACCESS_SECRET"),
+        )
+        self.api = tweepy.API(auth)
 
         media_ids = []
 

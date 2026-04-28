@@ -167,7 +167,7 @@ class BlogImageExtractor:
             # Or create carousel from multiple charts
             if len(images) > 2:
                 # Suggest carousel
-                selected = list(images.keys())[:5]  # Max 5 for carousel
+                selected = list(images.keys())[:3]
 
         return selected
 

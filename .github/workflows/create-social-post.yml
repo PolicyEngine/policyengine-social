@@ -18,10 +18,10 @@ jobs:
   generate-post:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v6
         with:
           python-version: '3.11'
       
@@ -40,7 +40,7 @@ jobs:
             --output "posts/queue/$(date +%Y-%m-%d)-$BLOG_SLUG.yaml"
       
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v5
+        uses: peter-evans/create-pull-request@v8
         with:
           title: "📱 Social posts for: ${{ github.event.client_payload.title || inputs.blog_title || inputs.blog_slug }}"
           body: |

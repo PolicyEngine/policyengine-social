@@ -2,6 +2,7 @@
 """
 Tests for X/Twitter publishing functionality.
 """
+
 from unittest.mock import patch, MagicMock
 
 import unittest

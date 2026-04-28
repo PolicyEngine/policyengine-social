@@ -10,27 +10,27 @@ publisher = MultiAccountXPublisher()
 print("Testing @thepolicyengine...")
 result = publisher.post(
     text="Testing automated posting from policyengine-social! 🚀 This is from our new multi-account posting system.",
-    account="thepolicyengine"
+    account="thepolicyengine",
 )
-if result['success']:
+if result["success"]:
     print(f"✅ Success: {result['url']}")
 else:
     print(f"❌ Error: {result['error']}")
 
-print("\n" + "="*50 + "\n")
+print("\n" + "=" * 50 + "\n")
 
-# Test 2: Post to @policyengineus  
+# Test 2: Post to @policyengineus
 print("Testing @policyengineus...")
 result = publisher.post(
     text="US-specific test from policyengine-social! 🇺🇸 Automated posting system for PolicyEngine US updates.",
-    account="policyengineus"
+    account="policyengineus",
 )
-if result['success']:
+if result["success"]:
     print(f"✅ Success: {result['url']}")
 else:
     print(f"❌ Error: {result['error']}")
 
-print("\n" + "="*50 + "\n")
+print("\n" + "=" * 50 + "\n")
 
 # Test 3: Test smart routing
 print("Testing smart routing...")
