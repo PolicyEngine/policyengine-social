@@ -5,12 +5,17 @@ src/policyengine_social/cli.py
 src/policyengine_social/extract.py
 src/policyengine_social/generate.py
 src/policyengine_social/publish.py
+src/policyengine_social/publish_with_db.py
 src/policyengine_social.egg-info/PKG-INFO
 src/policyengine_social.egg-info/SOURCES.txt
 src/policyengine_social.egg-info/dependency_links.txt
 src/policyengine_social.egg-info/entry_points.txt
 src/policyengine_social.egg-info/requires.txt
 src/policyengine_social.egg-info/top_level.txt
+src/policyengine_social/database/__init__.py
+src/policyengine_social/database/client.py
+src/policyengine_social/database/models.py
+src/policyengine_social/metrics/follower_tracker.py
 src/policyengine_social/publishers/bluesky.py
 src/policyengine_social/publishers/linkedin.py
 src/policyengine_social/publishers/x_multi.py
@@ -18,6 +23,7 @@ src/policyengine_social/publishers/zapier.py
 tests/test_all.py
 tests/test_bluesky_images.py
 tests/test_bluesky_link_preview.py
+tests/test_bluesky_url_facets.py
 tests/test_extract_blog_images.py
 tests/test_generate_social_post.py
 tests/test_publish_to_x.py

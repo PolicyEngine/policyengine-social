@@ -53,6 +53,43 @@ class BlueSkyPublisher:
         urls = re.findall(url_pattern, text)
         return urls
     
+    def _create_facets_for_urls(self, text: str) -> List:
+        """Create facets for URLs in text to make them clickable.
+        
+        Args:
+            text: Text containing URLs
+            
+        Returns:
+            List of facet objects for URLs
+        """
+        from atproto import models
+        
+        facets = []
+        url_pattern = r'https?://[^\s<>"{}|\\^`\[\]]+'
+        
+        for match in re.finditer(url_pattern, text):
+            url = match.group(0)
+            start = match.start()
+            end = match.end()
+            
+            # Calculate byte positions (Bluesky uses UTF-8 byte positions)
+            byte_start = len(text[:start].encode('utf-8'))
+            byte_end = len(text[:end].encode('utf-8'))
+            
+            # Create facet for this URL
+            facet = models.AppBskyRichtextFacet.Main(
+                index=models.AppBskyRichtextFacet.ByteSlice(
+                    byte_start=byte_start,
+                    byte_end=byte_end
+                ),
+                features=[
+                    models.AppBskyRichtextFacet.Link(uri=url)
+                ]
+            )
+            facets.append(facet)
+        
+        return facets
+    
     def _fetch_url_metadata(self, url: str) -> Dict[str, Optional[str]]:
         """Fetch Open Graph metadata from URL.
         
@@ -145,9 +182,8 @@ class BlueSkyPublisher:
                 logger.warning(f"Text too long for Bluesky ({len(text)} chars), truncating")
                 text = text[:297] + "..."
             
-            # Build the post
-            post_builder = client_utils.TextBuilder()
-            post_builder.text(text)
+            # Create facets for URLs to make them clickable
+            facets = self._create_facets_for_urls(text)
             
             # Handle embeds - images take precedence over link previews
             embed = None
@@ -212,8 +248,8 @@ class BlueSkyPublisher:
             
             # Create the post
             post_data = {
-                "text": post_builder.build_text(),
-                "facets": post_builder.build_facets(),
+                "text": text,
+                "facets": facets,
             }
             
             if embed:
@@ -223,8 +259,8 @@ class BlueSkyPublisher:
             if reply_to:
                 # reply_to should be a dict with parent and root URIs and CIDs
                 response = self.client.send_post(
-                    text=post_builder.build_text(),
-                    facets=post_builder.build_facets(),
+                    text=text,
+                    facets=facets,
                     embed=embed,
                     reply_to={
                         "parent": {"uri": reply_to["uri"], "cid": reply_to["cid"]},
@@ -233,7 +269,11 @@ class BlueSkyPublisher:
                     }
                 )
             else:
-                response = self.client.send_post(**post_data)
+                response = self.client.send_post(
+                    text=text,
+                    facets=facets,
+                    embed=embed
+                )
             
             logger.info(f"Posted to Bluesky: {response.uri}")
             
