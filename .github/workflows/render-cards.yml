@@ -29,7 +29,7 @@ jobs:
       - name: Install librsvg (funder logos) and FriBiDi (kerning)
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends librsvg2-bin libfribidi0
 
-      - uses: astral-sh/setup-uv@v10
+      - uses: astral-sh/setup-uv@v10.3.3
 
       - name: Test the renderer
         run: uv run --locked --group dev pytest -q
