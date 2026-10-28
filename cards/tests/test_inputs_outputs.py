@@ -58,6 +58,9 @@ MISSING = object()
     (("card", 0), "wrong", "card #1", "card"),
     *[(("card", 0, field), value, "card", field)
       for field in ("id", "kicker", "headline", "footer") for value in (MISSING, "", " ", 135)],
+    # A field of nothing but accent marks draws nothing, so it counts as blank.
+    *[(("card", 0, field), value, "card", field)
+      for field in ("kicker", "headline", "footer", "note") for value in ("**", "** ** ")],
     (("card", 0, "id"), "../escape", "card", "id"),
     (("card", 0, "note"), 1, "card", "note"),
     (("card", 0, "post"), 1, "card", "post"),
@@ -68,6 +71,8 @@ MISSING = object()
     (("card", 0, "stats", 0), 1, "card 'one'", "stats[1]"),
     *[(("card", 0, "stats", 0, field), value, "card 'one'", field)
       for field in ("value", "label", "source") for value in (MISSING, "", " ", 135)],
+    *[(("card", 0, "stats", 0, field), value, "card 'one'", field)
+      for field in ("value", "label", "tag") for value in ("**", "** ** ")],
     (("card", 0, "stats", 0, "tag"), 1, "card 'one'", "tag"),
     (("campaign",), "wrong", "campaign", "campaign"),
     (("campaign", "name"), "", "campaign", "name"),

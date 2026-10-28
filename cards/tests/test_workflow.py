@@ -93,18 +93,63 @@ def test_commit_step_pushes_current_images_and_deletions(repositories):
     assert git(work, "status", "--porcelain") == ""
 
 
-def test_commit_step_skips_superseded_source(repositories):
+def push_from_writer(writer, env, git, path, text, message):
+    target = writer / path
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(text)
+    git(writer, "add", path)
+    git(writer, "commit", "-m", message)
+    git(writer, "push", "origin", f"HEAD:refs/heads/{env['CARD_BRANCH']}")
+    return git(writer, "rev-parse", "HEAD")
+
+
+@pytest.mark.parametrize(
+    "path",
+    ["cards/campaigns/example/cards.toml", "cards/make_cards.py", ".github/workflows/render-cards.yml"],
+)
+def test_commit_step_skips_when_card_inputs_change(repositories, path):
+    # A push that changes a card input starts its own run, which draws the newer text.
     work, writer, _, env, git = repositories
     rendered_source = git(work, "rev-parse", "HEAD")
-    (writer / "source.txt").write_text("newer text")
-    git(writer, "commit", "-am", "New source")
-    git(writer, "push", "origin", f"HEAD:refs/heads/{env['CARD_BRANCH']}")
+    newer = push_from_writer(writer, env, git, path, "newer input", "New card input")
     result = run_commit_step(work, env)
     assert result.returncode == 0, result.stderr
-    assert "branch moved" in result.stdout
+    assert "card inputs changed" in result.stdout
     assert git(work, "rev-parse", "HEAD") == rendered_source
+    assert git(writer, "ls-remote", "origin", f"refs/heads/{env['CARD_BRANCH']}").split()[0] == newer
     assert (writer / "cards/campaigns/example/rendered/current.png").read_bytes() == b"old image"
+
+
+def test_commit_step_commits_on_top_when_only_other_files_change(repositories):
+    # A push outside the push paths starts no run, so this run's cards still have to land.
+    work, writer, rendered, env, git = repositories
+    (rendered / "obsolete.png").unlink()
+    newer = push_from_writer(writer, env, git, "source.txt", "newer text", "New text outside cards/")
+    result = run_commit_step(work, env)
+    assert result.returncode == 0, result.stderr
+    assert "committing these cards on top" in result.stdout
+    git(writer, "pull", "--ff-only")
+    assert git(writer, "rev-parse", "HEAD^") == newer
+    remote_images = writer / "cards/campaigns/example/rendered"
+    assert (remote_images / "current.png").read_bytes() == b"fresh image"
+    assert not (remote_images / "obsolete.png").exists()
     assert (writer / "source.txt").read_text() == "newer text"
+    assert git(writer, "show", "--name-only", "--format=", "HEAD").split() == [
+        "cards/campaigns/example/rendered/current.png",
+        "cards/campaigns/example/rendered/obsolete.png",
+    ]
+
+
+def test_commit_step_fails_when_the_branch_is_rewritten(repositories):
+    work, writer, _, env, git = repositories
+    (writer / "source.txt").write_text("rewritten text")
+    git(writer, "commit", "--amend", "-am", "Rewritten history")
+    git(writer, "push", "--force", "origin", f"HEAD:refs/heads/{env['CARD_BRANCH']}")
+    rewritten = git(writer, "rev-parse", "HEAD")
+    result = run_commit_step(work, env)
+    assert result.returncode == 1
+    assert "rewritten" in result.stdout
+    assert git(writer, "ls-remote", "origin", f"refs/heads/{env['CARD_BRANCH']}").split()[0] == rewritten
 
 
 def test_commit_step_does_not_retry_a_rejected_push(repositories, tmp_path):

@@ -141,8 +141,9 @@ def load(folder: Path) -> Campaign:
         value = table[key]
         if not isinstance(value, str):
             fail(scope, key, f"expected a quoted string, got {type(value).__name__}")
-        if not value.strip() and not (optional and value == ""):
-            fail(scope, key, "must not be blank; enter a nonempty quoted string")
+        # ** only marks the accent, so a field of nothing but marks shows nothing.
+        if not value.replace("**", "").strip() and not (optional and value == ""):
+            fail(scope, key, "must not be blank; enter a nonempty quoted string (the ** marks don't count)")
         return value
 
     def entries(value, scope: str, field: str, *, nonempty: bool = False) -> list:
@@ -361,8 +362,17 @@ def draw_stats(canvas: Card, layout: Layout, card: dict, top: float, bottom: flo
     label_w = left + content - label_x
     rows = []
     for i, stat in enumerate(stats):
-        tag = wrap_field(layout, card, f"stat {i + 1} tag", stat["tag"], tag_style, label_w) if stat.get("tag") else []
-        label = wrap_field(layout, card, f"stat {i + 1} label", stat["label"], label_style, label_w)
+        try:
+            tag = wrap_field(layout, card, f"stat {i + 1} tag", stat["tag"], tag_style, label_w) if stat.get("tag") else []
+            label = wrap_field(layout, card, f"stat {i + 1} label", stat["label"], label_style, label_w)
+        except CardError as error:
+            # The widest value sets the room every tag and label gets, so name it too.
+            widest = max(range(len(stats)), key=lambda j: line_width(words(stats[j]["value"], Style("serif", layout.value, TEAL))))
+            raise CardError(
+                f"{str(error).removeprefix('make_cards: ')} The stat {widest + 1} value, the widest on this card, "
+                f"leaves {max(label_w, 0):.0f}px "
+                "beside it for tags and labels: shorten that value or this text."
+            ) from error
         height = max(
             metrics("serif", layout.value)[0],
             (len(tag) * layout.tag * 1.35 + 6 if tag else 0) + metrics("sans", layout.label)[0]

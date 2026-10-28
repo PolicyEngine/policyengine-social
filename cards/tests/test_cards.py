@@ -75,6 +75,21 @@ def test_wrap_refuses_a_word_too_wide():
         wrap(words("supercalifragilistic expialidocious", style), 40)
 
 
+def test_square_label_that_cannot_fit_names_the_widest_value():
+    # A long value pushes every square label into a narrow column; the error
+    # names the value as well as the label that no longer fits.
+    square = next(layout for layout in make_cards.LAYOUTS if layout.suffix == "-square")
+    card = {
+        "id": "wide", "kicker": "Kicker", "headline": "Headline", "footer": "policyengine.org",
+        "stats": [
+            {"value": "£1", "label": "a label that needs room", "source": "test"},
+            {"value": "£123,456,789,012,345,678,901", "label": "another label", "source": "test"},
+        ],
+    }
+    with pytest.raises(CardError, match=r"^make_cards: wide-square: the stat 1 label: .*The stat 2 value, the widest on this card"):
+        make_cards.render(square, card, None)
+
+
 # --------------------------------------------------------------------------
 # Every campaign card
 # --------------------------------------------------------------------------

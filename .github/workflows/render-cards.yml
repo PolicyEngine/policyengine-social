@@ -51,9 +51,29 @@ jobs:
         run: |
           rendered_sha=$(git rev-parse HEAD)
           git fetch --no-tags origin "refs/heads/$CARD_BRANCH"
-          if [ "$(git rev-parse FETCH_HEAD)" != "$rendered_sha" ]; then
-            echo "The branch moved while these cards rendered; the newer run will render its text."
-            exit 0
+          head_sha=$(git rev-parse FETCH_HEAD)
+          if [ "$head_sha" != "$rendered_sha" ]; then
+            if ! git merge-base --is-ancestor "$rendered_sha" "$head_sha"; then
+              echo "::error::The branch was rewritten while these cards rendered. Run Render cards again on the branch (Actions, Render cards, Run workflow)."
+              exit 1
+            fi
+            # Every render input matches the push paths above, so a push that
+            # changes one starts its own run, which draws the newer text.
+            if ! git diff --quiet "$rendered_sha" "$head_sha" -- . ':(exclude)campaigns/*/rendered/*' ../.github/workflows/render-cards.yml; then
+              echo "The branch moved and its card inputs changed while these cards rendered; the newer run will render them."
+              exit 0
+            fi
+            # Only files the cards don't read changed (a README, say), and a push
+            # of those starts no run: these images still match, so commit them
+            # on top of the newer commit.
+            echo "The branch moved, but not its card inputs; committing these cards on top of it."
+            saved=$(mktemp -d)
+            cp -a campaigns "$saved/"
+            git checkout --quiet --force "$head_sha"
+            rm -rf campaigns/*/rendered
+            for dir in "$saved"/campaigns/*/rendered; do
+              cp -a "$dir" "campaigns/$(basename "$(dirname "$dir")")/"
+            done
           fi
           git add --all -- campaigns/*/rendered
           if git diff --cached --quiet; then
