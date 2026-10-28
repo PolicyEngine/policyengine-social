@@ -13,6 +13,8 @@ Invariants, for every input:
 
 from __future__ import annotations
 
+import io
+import itertools
 import shutil
 import sys
 from dataclasses import replace
@@ -50,7 +52,16 @@ def test_wrap_keeps_words_and_fits(tokens, width):
     try:
         lines = wrap(line, width)
     except CardError:
-        # Refused only when some single word, or the text in six lines, can't fit.
+        # Independently enumerate this small input's possible partitions to
+        # prove a refusal is justified, rather than accepting every refusal.
+        # A separator is removable at a line break; a single unbroken line
+        # retains its leading/trailing dots.
+        assert line_width(line) > width
+        for count in range(2, min(len(line), 6) + 1):
+            for cuts in itertools.combinations(range(1, len(line)), count - 1):
+                edges = (0, *cuts, len(line))
+                parts = [sharecard.trim(line[a:b]) for a, b in zip(edges, edges[1:])]
+                assert not (all(parts) and all(line_width(part) <= width for part in parts))
         return
     assert all(line_width(part) <= width for part in lines)
     kept = [plain(w) for part in lines for w in part]
@@ -85,21 +96,17 @@ def test_campaign_card_renders(campaign, card):
 
 
 @needs_rsvg
-def test_rendering_is_deterministic():
-    campaign = make_cards.load(CAMPAIGNS[0])
-    card = campaign.cards[0]
+@pytest.mark.parametrize(("campaign", "card"), list(all_cards()))
+def test_rendering_is_deterministic(campaign, card):
     for layout in make_cards.LAYOUTS:
         first, _ = make_cards.render(layout, card, campaign.funder)
         second, _ = make_cards.render(layout, card, campaign.funder)
-        assert first.tobytes() == second.tobytes()
-
-
-def test_documents_name_real_cards():
-    for folder in CAMPAIGNS:
-        campaign = make_cards.load(folder)
-        ids = {c["id"] for c in campaign.cards}
-        for doc in campaign.documents:
-            assert set(doc["cards"]) <= ids
+        encoded = []
+        for image in (first, second):
+            stream = io.BytesIO()
+            image.save(stream, format="PNG", optimize=True)
+            encoded.append(stream.getvalue())
+        assert encoded[0] == encoded[1]
 
 
 # --------------------------------------------------------------------------
@@ -161,18 +168,24 @@ def test_altered_funder_logo_is_refused(tmp_path):
 # --------------------------------------------------------------------------
 
 PHRASE = st.lists(WORD, min_size=1, max_size=14).map(" ".join)
+GENERATED_STAT = st.fixed_dictionaries({
+    "value": st.one_of(WORD, st.sampled_from(["£135", "−£520", "53.3%", "£12345678901234567890"])),
+    "tag": st.one_of(st.just(""), PHRASE),
+    "label": PHRASE,
+    "source": st.just("test"),
+})
 
 
 @needs_rsvg
 @settings(max_examples=25, deadline=None, suppress_health_check=[HealthCheck.too_slow])
-@given(kicker=PHRASE, headline=PHRASE, label=PHRASE, note=st.one_of(st.just(""), PHRASE))
-def test_any_text_fits_or_is_refused(kicker, headline, label, note):
+@given(kicker=PHRASE, headline=PHRASE, stats=st.lists(GENERATED_STAT, min_size=2, max_size=3), note=st.one_of(st.just(""), PHRASE))
+def test_any_text_fits_or_is_refused(kicker, headline, stats, note):
     card = {
         "id": "generated",
         "kicker": kicker,
         "headline": headline,
         "footer": "policyengine.org/uk/research",
-        "stats": [{"value": "£135", "label": label, "source": "test"}, {"value": "£10", "label": "x", "source": "test"}],
+        "stats": stats,
         "note": note,
     }
     for layout in make_cards.LAYOUTS:
@@ -186,3 +199,8 @@ def test_any_text_fits_or_is_refused(kicker, headline, label, note):
         order = ["kicker", "headline", "stats"] + (["note"] if "note" in boxes else []) + ["footer"]
         for above, below in zip(order, order[1:]):
             assert boxes[below].y0 - boxes[above].y1 >= 10
+        components = [box for name, box in boxes.items() if name.startswith("stat ")]
+        assert len(components) == sum(2 + bool(stat["tag"]) for stat in stats)
+        for first, second in itertools.combinations(components, 2):
+            assert (first.x1 <= second.x0 or second.x1 <= first.x0
+                    or first.y1 <= second.y0 or second.y1 <= first.y0)

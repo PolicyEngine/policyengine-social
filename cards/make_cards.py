@@ -29,6 +29,7 @@ missing from the font.
 from __future__ import annotations
 
 import argparse
+import re
 import tomllib
 from dataclasses import dataclass
 from pathlib import Path
@@ -107,43 +108,118 @@ class Campaign:
 
 def load(folder: Path) -> Campaign:
     path = folder / "cards.toml"
-    if not path.exists():
-        raise CardError(f"{folder} has no cards.toml.")
-    data = tomllib.loads(path.read_text(encoding="utf-8"))
-    funder_name = data.get("campaign", {}).get("funder", "")
+    try:
+        text = path.read_text(encoding="utf-8")
+    except (OSError, UnicodeError) as exc:
+        raise CardError(f"{path}: cannot read campaign input: {exc}.") from exc
+    try:
+        data = tomllib.loads(text)
+    except tomllib.TOMLDecodeError as exc:
+        # Keep the parser's line/column and recover the surrounding editor-facing
+        # section/field even when the document cannot be parsed.
+        match = re.search(r"at line (\d+)", str(exc))
+        lineno = getattr(exc, "lineno", int(match[1]) if match else len(text.splitlines()))
+        scope, field = "campaign", "TOML"
+        for line in text.splitlines()[:lineno]:
+            if re.match(r"\[\[(card|document)\]\]", line.strip()):
+                scope = line.strip()[2:-2]
+            key = re.match(r'\s*([\w-]+)\s*=\s*(.*)', line)
+            if key:
+                field = key[1]
+                if field == "id":
+                    scope = scope.split(" '")[0] + " " + key[2].strip()
+        raise CardError(f"{path}: {scope}, field {field}: invalid TOML: {exc}. Check the quotes and brackets.") from exc
+
+    def fail(scope: str, field: str, problem: str) -> None:
+        raise CardError(f"{path}: {scope}, field {field}: {problem}.")
+
+    def string(table: dict, key: str, scope: str, *, optional: bool = False) -> str:
+        if key not in table:
+            if optional:
+                return ""
+            fail(scope, key, "missing; add a nonempty quoted string")
+        value = table[key]
+        if not isinstance(value, str):
+            fail(scope, key, f"expected a quoted string, got {type(value).__name__}")
+        if not value.strip() and not (optional and value == ""):
+            fail(scope, key, "must not be blank; enter a nonempty quoted string")
+        return value
+
+    def entries(value, scope: str, field: str, *, nonempty: bool = False) -> list:
+        if not isinstance(value, list) or (nonempty and not value):
+            fail(scope, field, "expected " + ("a nonempty" if nonempty else "an") + " array")
+        return value
+
+    def identifier(table: dict, scope: str, seen: set[str]) -> str:
+        value = string(table, "id", scope)
+        if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]*", value):
+            fail(scope, "id", "use letters, digits, hyphens or underscores, starting with a letter or digit")
+        if value in seen:
+            fail(scope, "id", f"duplicate id {value!r}; give each {scope.split()[0]} a unique id")
+        seen.add(value)
+        return value
+
+    campaign = data.get("campaign", {})
+    if not isinstance(campaign, dict):
+        fail("campaign", "campaign", "expected a [campaign] table")
+    if "name" in campaign:
+        string(campaign, "name", "campaign")
+    funder_name = string(campaign, "funder", "campaign", optional=True)
     if funder_name and funder_name not in base.FUNDERS:
-        raise CardError(f"{path}: unknown funder {funder_name!r}; known: {', '.join(base.FUNDERS)}.")
+        fail("campaign", "funder", f"unknown funder {funder_name!r}; choose {', '.join(base.FUNDERS)} or an empty string")
     funder = base.FUNDERS[funder_name] if funder_name else None
-    cards = data.get("card", [])
+    cards = entries(data.get("card"), "campaign", "card", nonempty=True)
     seen = set()
-    for card in cards:
-        for key in ("id", "kicker", "headline", "footer", "stats"):
-            if key not in card:
-                raise CardError(f"a card in {path} has no {key}.")
-        if card["id"] in seen:
-            raise CardError(f"two cards are called {card['id']}.")
-        seen.add(card["id"])
-        if not 2 <= len(card["stats"]) <= 3:
-            raise CardError(f"{card['id']} has {len(card['stats'])} stats; draw two or three.")
-        for stat in card["stats"]:
-            if "source" not in stat:
-                raise CardError(f"{card['id']}: the stat {stat.get('value')} names no source.")
-        vet(card["id"], "kicker", card["kicker"], ("bold",))
-        vet(card["id"], "headline", card["headline"], ("serif",))
-        vet(card["id"], "note", card.get("note", ""), ("sans",))
-        vet(card["id"], "footer", card["footer"], ("bold",))
-        for stat in card["stats"]:
-            vet(card["id"], f"stat {stat['value']}", stat["value"], ("serif",))
-            vet(card["id"], f"label of {stat['value']}", stat["label"] + stat.get("tag", ""), ("sans", "bold"))
-    documents = data.get("document", [])
-    for doc in documents:
-        for key in ("id", "title", "cards"):
-            if key not in doc:
-                raise CardError(f"a document in {path} has no {key}.")
-        unknown = [c for c in doc["cards"] if c not in seen]
-        if unknown:
-            raise CardError(f"document {doc['id']} names cards that {path} doesn't have: {', '.join(unknown)}.")
+    outputs = set()
+    for i, card in enumerate(cards, 1):
+        scope = f"card {card.get('id', f'#{i}')!r}" if isinstance(card, dict) else f"card #{i}"
+        if not isinstance(card, dict):
+            fail(scope, "card", "expected a [[card]] table")
+        card_id = identifier(card, scope, seen)
+        for layout in LAYOUTS:
+            name = card_id + layout.suffix + ".png"
+            if name in outputs:
+                fail(scope, "id", f"output {name!r} collides with another card; choose a different id")
+            outputs.add(name)
+        for key, faces in (("kicker", ("bold",)), ("headline", ("serif",)), ("footer", ("bold",)), ("note", ("sans",))):
+            value = string(card, key, scope, optional=key == "note")
+            vet(f"{path}: {scope}", key, value, faces)
+        for key in ("post", "gate"):
+            if key in card:
+                string(card, key, scope)
+        stats = entries(card.get("stats"), scope, "stats")
+        if not 2 <= len(stats) <= 3:
+            fail(scope, "stats", f"got {len(stats)} stats; provide two or three")
+        for j, stat in enumerate(stats, 1):
+            if not isinstance(stat, dict):
+                fail(scope, f"stats[{j}]", "expected a [[card.stats]] table")
+            for key, faces in (("value", ("serif",)), ("label", ("sans",)), ("tag", ("bold",)), ("source", ())):
+                value = string(stat, key, f"{scope}, stat {j}", optional=key == "tag")
+                vet(f"{path}: {scope}", f"stat {j} {key}", value, faces)
+    documents = entries(data.get("document", []), "campaign", "document")
+    doc_ids = set()
+    for i, doc in enumerate(documents, 1):
+        scope = f"document {doc.get('id', f'#{i}')!r}" if isinstance(doc, dict) else f"document #{i}"
+        if not isinstance(doc, dict):
+            fail(scope, "document", "expected a [[document]] table")
+        identifier(doc, scope, doc_ids)
+        string(doc, "title", scope)
+        members = entries(doc.get("cards"), scope, "cards", nonempty=True)
+        for j, member in enumerate(members, 1):
+            if not isinstance(member, str) or not member.strip():
+                fail(scope, f"cards[{j}]", "expected a nonempty quoted card id")
+            if member not in seen:
+                fail(scope, f"cards[{j}]", f"unknown card id {member!r}; choose one of {', '.join(sorted(seen))}")
     return Campaign(folder, funder, cards, documents)
+
+
+def wrap_field(layout: Layout, card: dict, field: str, text: str, style: Style, width: float, max_lines: int = 6):
+    """Keep every fitting error tied to the card, size and editable field."""
+    try:
+        return wrap(words(text, style), width, max_lines=max_lines)
+    except CardError as error:
+        detail = str(error).removeprefix("make_cards: ")
+        raise CardError(f"{card['id']}{layout.suffix}: the {field}: {detail}") from error
 
 
 def render(layout: Layout, card: dict, funder: Funder | None):
@@ -164,7 +240,7 @@ def render(layout: Layout, card: dict, funder: Funder | None):
         )
         used["funder"] = [f"{funder.label} [{funder.svg.parent.name} logo]"]
         kicker_right = funder_left - layout.cluster_gap
-    lines = wrap(words(card["kicker"], kicker), kicker_right - left)
+    lines = wrap_field(layout, card, "kicker", card["kicker"], kicker, kicker_right - left)
     y = canvas.paragraph(lines, left, y, layout.kicker * 1.5, "kicker")
     used["kicker"] = [shown(line) for line in lines]
 
@@ -172,14 +248,14 @@ def render(layout: Layout, card: dict, funder: Funder | None):
     while True:
         headline = Style("serif", size, WHITE, leading=1.15)
         try:
-            lines = wrap(words(card["headline"], headline), content)
+            lines = wrap_field(layout, card, "headline", card["headline"], headline, content, layout.headline_lines)
         except CardError:
             lines = []
         if lines and len(lines) <= layout.headline_lines:
             break
         size -= 2
         if size < layout.headline_min:
-            raise CardError(f"{card['id']}: the headline needs more than {layout.headline_lines} lines.")
+            raise CardError(f"{card['id']}{layout.suffix}: the headline does not fit in {layout.headline_lines} lines at {layout.headline_min:g}px.")
     y += layout.headline_gap + metrics("serif", size)[1]
     y = canvas.paragraph(lines, left, y, size * headline.leading, "headline")
     used[f"headline {size:.0f}px"] = [shown(line) for line in lines]
@@ -197,7 +273,7 @@ def render(layout: Layout, card: dict, funder: Funder | None):
         if fsize < 14:
             raise CardError(f"{card['id']}{layout.suffix}: the footer link is too long for the space beside the logos.")
     footer = Style("bold", fsize, TEAL)
-    flines = wrap(words(card["footer"], footer), logo_x - left - 32)
+    flines = wrap_field(layout, card, "footer", card["footer"], footer, logo_x - left - 32, max_lines=1)
     fpitch = fsize * 1.45
     first = layout.h - layout.bottom - (len(flines) - 1) * fpitch
     canvas.paragraph(flines, left, first, fpitch, "footer")
@@ -206,7 +282,7 @@ def render(layout: Layout, card: dict, funder: Funder | None):
 
     if card.get("note"):
         note = Style("sans", layout.note, MUTED)
-        nlines = wrap(words(card["note"], note), content)
+        nlines = wrap_field(layout, card, "note", card["note"], note, content)
         npitch = layout.note * 1.45
         nlast = band_top - 22 - metrics("sans", layout.note)[2]
         nfirst = nlast - (len(nlines) - 1) * npitch
@@ -236,14 +312,23 @@ def draw_stats(canvas: Card, layout: Layout, card: dict, top: float, bottom: flo
             blocks.append((x, width, stat))
         # All columns share the tag row and the value baseline, so they align.
         has_tag = any(stat.get("tag") for stat in stats)
-        tag_lines = {i: wrap(words(s["tag"], tag_style), width) if s.get("tag") else [] for i, (_, _, s) in enumerate(blocks)}
+        tag_lines = {
+            i: wrap_field(layout, card, f"stat {i + 1} tag", s["tag"], tag_style, width) if s.get("tag") else []
+            for i, (_, _, s) in enumerate(blocks)
+        }
         tag_rows = max((len(v) for v in tag_lines.values()), default=0)
         value_size = layout.value
         for i, (x, w, stat) in enumerate(blocks):
             while line_width(words(stat["value"], Style("serif", value_size, TEAL))) > w and value_size > 36:
                 value_size -= 2
+            if line_width(words(stat["value"], Style("serif", value_size, TEAL))) > w:
+                raise CardError(f"{card['id']}{layout.suffix}: the stat {i + 1} value does not fit in {w:.0f}px at the minimum 36px size.")
         # Measure the block first, then sit it a little above the middle of its space.
-        label_rows = max(len(wrap(words(s["label"], label_style), width)) for s in stats)
+        label_lines = {
+            i: wrap_field(layout, card, f"stat {i + 1} label", s["label"], label_style, width)
+            for i, s in enumerate(stats)
+        }
+        label_rows = max(len(lines) for lines in label_lines.values())
         height = (
             (metrics("bold", layout.tag)[0] + (tag_rows - 1) * layout.tag * 1.35 + 14 if has_tag else 0)
             + metrics("serif", value_size)[0] + 16 + metrics("sans", layout.label)[1]
@@ -253,18 +338,19 @@ def draw_stats(canvas: Card, layout: Layout, card: dict, top: float, bottom: flo
         if has_tag:
             y += metrics("bold", layout.tag)[0]
             for i, (x, w, stat) in enumerate(blocks):
-                canvas.paragraph(tag_lines[i], x, y, layout.tag * 1.35, "stats")
+                canvas.paragraph(tag_lines[i], x, y, layout.tag * 1.35, f"stat {i + 1} tag")
                 used[f"stat {i + 1} tag"] = [shown(line) for line in tag_lines[i]]
             y += (tag_rows - 1) * layout.tag * 1.35 + 14
         y += metrics("serif", value_size)[0]
         for i, (x, w, stat) in enumerate(blocks):
             value = Style("serif", value_size, TEAL)
-            canvas.text(words(stat["value"], value)[0:], x, y, "stats")
+            canvas.text(words(stat["value"], value)[0:], x, y, f"stat {i + 1} value")
             used[f"stat {i + 1} value"] = [stat["value"]]
-            lines = wrap(words(stat["label"], label_style), w)
+            lines = label_lines[i]
             ly = y + 16 + metrics("sans", layout.label)[1]
-            canvas.paragraph(lines, x, ly, layout.label * label_style.leading, "stats")
+            canvas.paragraph(lines, x, ly, layout.label * label_style.leading, f"stat {i + 1} label")
             used[f"stat {i + 1} label"] = [shown(line) for line in lines]
+        record_stats_box(canvas)
         if canvas.boxes["stats"].y1 > bottom:
             raise CardError(f"{card['id']}{layout.suffix}: the stats run {canvas.boxes['stats'].y1 - bottom:.0f}px into the note.")
         return
@@ -274,9 +360,9 @@ def draw_stats(canvas: Card, layout: Layout, card: dict, top: float, bottom: flo
     label_x = left + value_w + 36
     label_w = left + content - label_x
     rows = []
-    for stat in stats:
-        tag = wrap(words(stat["tag"], tag_style), label_w) if stat.get("tag") else []
-        label = wrap(words(stat["label"], label_style), label_w)
+    for i, stat in enumerate(stats):
+        tag = wrap_field(layout, card, f"stat {i + 1} tag", stat["tag"], tag_style, label_w) if stat.get("tag") else []
+        label = wrap_field(layout, card, f"stat {i + 1} label", stat["label"], label_style, label_w)
         height = max(
             metrics("serif", layout.value)[0],
             (len(tag) * layout.tag * 1.35 + 6 if tag else 0) + metrics("sans", layout.label)[0]
@@ -297,16 +383,16 @@ def draw_stats(canvas: Card, layout: Layout, card: dict, top: float, bottom: flo
         )
         # The value and the words beside it share a centre line.
         vy, ly0 = y + (height - cap) / 2, y + (height - block) / 2
-        canvas.text(words(stat["value"], Style("serif", layout.value, TEAL)), left, vy + cap, "stats")
+        canvas.text(words(stat["value"], Style("serif", layout.value, TEAL)), left, vy + cap, f"stat {i + 1} value")
         used[f"stat {i + 1} value"] = [stat["value"]]
         ty = ly0 + metrics("bold", layout.tag)[0]
         if tag:
-            canvas.paragraph(tag, label_x, ty, layout.tag * 1.35, "stats")
+            canvas.paragraph(tag, label_x, ty, layout.tag * 1.35, f"stat {i + 1} tag")
             used[f"stat {i + 1} tag"] = [shown(line) for line in tag]
             ty += (len(tag) - 1) * layout.tag * 1.35 + 6 + layout.label * 1.1
         else:
             ty = ly0 + metrics("sans", layout.label)[0]
-        canvas.paragraph(label, label_x, ty, layout.label * label_style.leading, "stats")
+        canvas.paragraph(label, label_x, ty, layout.label * label_style.leading, f"stat {i + 1} label")
         used[f"stat {i + 1} label"] = [shown(line) for line in label]
         if i < len(rows) - 1:
             rule_y = y + height + gap / 2
@@ -315,6 +401,14 @@ def draw_stats(canvas: Card, layout: Layout, card: dict, top: float, bottom: flo
                 fill=(*MUTED, 60), width=max(1, round(base.SS)),
             )
         y += height + gap
+    record_stats_box(canvas)
+
+
+def record_stats_box(canvas: Card) -> None:
+    """Retain the section box while recording each component independently."""
+    for name, box in list(canvas.boxes.items()):
+        if name.startswith("stat "):
+            canvas.note("stats", box.x0, box.y0, box.x1, box.y1)
 
 
 def check(canvas: Card, layout: Layout, card_id: str) -> None:
@@ -324,6 +418,15 @@ def check(canvas: Card, layout: Layout, card_id: str) -> None:
             problems.append(f"{box.name} runs past the side margin")
         if box.y0 < 30 or box.y1 > layout.h - 30:
             problems.append(f"{box.name} runs past the top or bottom")
+    # A section's union box hides collisions within it. Compare each stat's
+    # value, tag and label with every other component instead.
+    parts = [box for name, box in boxes.items() if name != "stats"]
+    for i, first in enumerate(parts):
+        for second in parts[i + 1:]:
+            if not (first.name.startswith("stat ") or second.name.startswith("stat ")):
+                continue
+            if min(first.x1, second.x1) > max(first.x0, second.x0) and min(first.y1, second.y1) > max(first.y0, second.y0):
+                problems.append(f"{first.name} overlaps {second.name}")
     order = ["kicker", "headline", "stats"] + (["note"] if "note" in boxes else []) + ["footer"]
     for above, below in zip(order, order[1:]):
         room = boxes[below].y0 - boxes[above].y1
@@ -346,26 +449,53 @@ def render_campaign(campaign: Campaign, ids: list[str]) -> None:
     chosen = [c for c in campaign.cards if not ids or c["id"] in ids]
     if ids and len(chosen) != len(set(ids)):
         known = {c["id"] for c in campaign.cards}
-        raise CardError(f"{campaign.folder.name} has no card {', '.join(sorted(set(ids) - known))}.")
+        raise CardError(
+            f"{campaign.folder / 'cards.toml'}: card selection, field ids: unknown card id "
+            f"{', '.join(sorted(set(ids) - known))}; choose one of {', '.join(sorted(known))}."
+        )
     out = campaign.folder / "rendered"
     out.mkdir(exist_ok=True)
+    square_pages = {}
+
+    def display(path: Path) -> Path:
+        return path.relative_to(HERE) if path.is_relative_to(HERE) else path
+
     for card in chosen:
         rendered = [(layout, *render(layout, card, campaign.funder)) for layout in LAYOUTS]  # both fit before either is written
         for layout, image, used in rendered:
             path = out / f"{card['id']}{layout.suffix}.png"
             image.save(path, format="PNG", optimize=True)
+            if layout.suffix == "-square":
+                square_pages[card["id"]] = image
             where = "; ".join(f"{k}: {card[k]}" for k in ("post", "gate") if k in card)
-            print(f"\n{path.relative_to(HERE)}  {layout.w}x{layout.h}" + (f"  ({where})" if where else ""))
+            print(f"\n{display(path)}  {layout.w}x{layout.h}" + (f"  ({where})" if where else ""))
             for part, lines in used.items():
                 for line in lines:
                     print(f"  {part:16} | {line}")
     for doc in campaign.documents:
         if ids and not set(doc["cards"]) & set(ids):
             continue
-        pages = [Image.open(out / f"{c}-square.png").convert("RGB") for c in doc["cards"]]
+        # A partial render still builds the entire document from today's TOML.
+        # Never mix current pages with PNGs left by an earlier render.
+        cards_by_id = {card["id"]: card for card in campaign.cards}
+        square = next(layout for layout in LAYOUTS if layout.suffix == "-square")
+        for card_id in doc["cards"]:
+            if card_id not in square_pages:
+                square_pages[card_id], _ = render(square, cards_by_id[card_id], campaign.funder)
+        pages = [square_pages[card_id] for card_id in doc["cards"]]
         path = out / f"{doc['id']}.pdf"
-        pages[0].save(path, save_all=True, append_images=pages[1:], resolution=144, title=doc["title"], author="PolicyEngine")
-        print(f"\n{path.relative_to(HERE)}  {len(pages)} pages: {', '.join(doc['cards'])}")
+        pages[0].save(
+            path, save_all=True, append_images=pages[1:], resolution=144,
+            title=doc["title"], author="PolicyEngine", creationDate=None, modDate=None,
+        )
+        print(f"\n{display(path)}  {len(pages)} pages: {', '.join(doc['cards'])}")
+    if not ids:
+        expected = {f"{card['id']}{layout.suffix}.png" for card in campaign.cards for layout in LAYOUTS}
+        expected.update(f"{doc['id']}.pdf" for doc in campaign.documents)
+        for path in sorted(out.iterdir()):
+            if path.is_file() and path.suffix.lower() in {".png", ".pdf"} and path.name not in expected:
+                path.unlink()
+                print(f"Removed obsolete output {display(path)}")
 
 
 def main() -> None:
