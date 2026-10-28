@@ -90,6 +90,21 @@ def test_square_label_that_cannot_fit_names_the_widest_value():
         make_cards.render(square, card, None)
 
 
+def test_square_text_too_long_on_its_own_does_not_blame_a_value():
+    # A word too wide for the whole card fails however short the values are.
+    square = next(layout for layout in make_cards.LAYOUTS if layout.suffix == "-square")
+    card = {
+        "id": "long", "kicker": "Kicker", "headline": "Headline", "footer": "policyengine.org",
+        "stats": [
+            {"value": "£1", "label": "a" * 120, "source": "test"},
+            {"value": "£2", "label": "another label", "source": "test"},
+        ],
+    }
+    with pytest.raises(CardError, match=r"^make_cards: long-square: the stat 1 label: ") as raised:
+        make_cards.render(square, card, None)
+    assert "widest" not in str(raised.value)
+
+
 # --------------------------------------------------------------------------
 # Every campaign card
 # --------------------------------------------------------------------------

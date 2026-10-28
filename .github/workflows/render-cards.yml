@@ -50,39 +50,56 @@ jobs:
           CARD_BRANCH: ${{ github.ref_name }}
         run: |
           rendered_sha=$(git rev-parse HEAD)
-          git fetch --no-tags origin "refs/heads/$CARD_BRANCH"
-          head_sha=$(git rev-parse FETCH_HEAD)
-          if [ "$head_sha" != "$rendered_sha" ]; then
-            if ! git merge-base --is-ancestor "$rendered_sha" "$head_sha"; then
-              echo "::error::The branch was rewritten while these cards rendered. Run Render cards again on the branch (Actions, Render cards, Run workflow)."
-              exit 1
-            fi
-            # Every render input matches the push paths above, so a push that
-            # changes one starts its own run, which draws the newer text.
-            if ! git diff --quiet "$rendered_sha" "$head_sha" -- . ':(exclude)campaigns/*/rendered/*' ../.github/workflows/render-cards.yml; then
-              echo "The branch moved and its card inputs changed while these cards rendered; the newer run will render them."
-              exit 0
-            fi
-            # Only files the cards don't read changed (a README, say), and a push
-            # of those starts no run: these images still match, so commit them
-            # on top of the newer commit.
-            echo "The branch moved, but not its card inputs; committing these cards on top of it."
-            saved=$(mktemp -d)
-            cp -a campaigns "$saved/"
-            git checkout --quiet --force "$head_sha"
-            rm -rf campaigns/*/rendered
-            for dir in "$saved"/campaigns/*/rendered; do
-              cp -a "$dir" "campaigns/$(basename "$(dirname "$dir")")/"
-            done
-          fi
-          git add --all -- campaigns/*/rendered
-          if git diff --cached --quiet; then
-            echo "The rendered cards are already up to date."
-            exit 0
-          fi
+          saved=$(mktemp -d)
+          cp -a campaigns "$saved/"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "Render cards"
-          # A rejected push means the branch changed after the fetch. Leave the
-          # newer run to render that source; never rebase or retry these images.
-          git push origin "HEAD:refs/heads/$CARD_BRANCH"
+          # A push can land between the fetch and our push. Each pass checks the
+          # branch afresh against the commit these cards came from, so a retry
+          # never commits images older than the text they show.
+          for attempt in 1 2 3 4 5; do
+            git fetch --no-tags origin "refs/heads/$CARD_BRANCH"
+            head_sha=$(git rev-parse FETCH_HEAD)
+            if [ "$head_sha" != "$rendered_sha" ]; then
+              if ! git merge-base --is-ancestor "$rendered_sha" "$head_sha"; then
+                echo "::error::The branch was rewritten while these cards rendered. Run Render cards again on the branch (Actions, Render cards, Run workflow)."
+                exit 1
+              fi
+              # Every render input matches the push paths above, so a push that
+              # changes one starts its own run, which draws the newer text.
+              if ! git diff --quiet "$rendered_sha" "$head_sha" -- . ':(exclude)campaigns/*/rendered/*' ../.github/workflows/render-cards.yml; then
+                # Unless a newer commit asks GitHub to skip its runs.
+                # (grep reads all of its input, so git log never dies of SIGPIPE under pipefail.)
+                if git log --format=%B "$rendered_sha..$head_sha" | grep -iE '\[(skip ci|ci skip|no ci|skip actions|actions skip)\]|^skip-checks: ?true' >/dev/null; then
+                  echo "::error::The branch's card inputs changed while these cards rendered, and a newer commit skips CI, so no run will draw them. Run Render cards again on the branch (Actions, Render cards, Run workflow)."
+                  exit 1
+                fi
+                echo "The branch moved and its card inputs changed while these cards rendered; the newer run will render them."
+                exit 0
+              fi
+              # Only files the cards don't read changed (a README, say), and a push
+              # of those starts no run: these images still match, so commit them
+              # on top of the newer commit.
+              echo "The branch moved, but not its card inputs; committing these cards on top of it."
+            fi
+            if [ "$head_sha" != "$(git rev-parse HEAD)" ]; then
+              git checkout --quiet --force "$head_sha"
+              rm -rf campaigns/*/rendered
+              for dir in "$saved"/campaigns/*/rendered; do
+                [ -d "$dir" ] || continue
+                cp -a "$dir" "campaigns/$(basename "$(dirname "$dir")")/"
+              done
+            fi
+            git add --all -- campaigns/*/rendered
+            if git diff --cached --quiet; then
+              echo "The rendered cards are already up to date."
+              exit 0
+            fi
+            git commit --quiet -m "Render cards"
+            if git push origin "HEAD:refs/heads/$CARD_BRANCH"; then
+              exit 0
+            fi
+            echo "The branch moved after the fetch; checking it again."
+          done
+          echo "::error::The branch kept moving while this run committed its cards. Run Render cards again on the branch (Actions, Render cards, Run workflow)."
+          exit 1

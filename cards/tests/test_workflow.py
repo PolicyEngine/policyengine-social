@@ -65,7 +65,8 @@ def repositories(tmp_path):
 
 def run_commit_step(work, env):
     return subprocess.run(
-        ["bash", "-e", "-c", commit_script()],
+        # GitHub runs each step with these flags.
+        ["bash", "--noprofile", "--norc", "-eo", "pipefail", "-c", commit_script()],
         cwd=work / "cards",
         env=env,
         capture_output=True,
@@ -152,22 +153,43 @@ def test_commit_step_fails_when_the_branch_is_rewritten(repositories):
     assert git(writer, "ls-remote", "origin", f"refs/heads/{env['CARD_BRANCH']}").split()[0] == rewritten
 
 
-def test_commit_step_does_not_retry_a_rejected_push(repositories, tmp_path):
+@pytest.mark.parametrize(
+    "message",
+    ["Fix a typo [skip ci]", "Fix a typo [CI SKIP]", "Fix a typo [no ci]", "Fix a typo\n\n\nskip-checks: true"],
+)
+def test_commit_step_fails_when_a_newer_input_commit_skips_ci(repositories, message):
+    # A push that skips CI starts no run, so nothing would draw its text: say so.
     work, writer, _, env, git = repositories
-    (writer / "source.txt").write_text("text pushed during the render push")
-    git(writer, "commit", "-am", "Race with renderer")
-    newer_sha = git(writer, "rev-parse", "HEAD")
+    newer = push_from_writer(writer, env, git, "cards/campaigns/example/cards.toml", "newer input", message)
+    result = run_commit_step(work, env)
+    assert result.returncode == 1
+    assert "skips CI" in result.stdout
+    assert git(writer, "ls-remote", "origin", f"refs/heads/{env['CARD_BRANCH']}").split()[0] == newer
+
+
+# Before each of the step's pushes, while races remain, push a commit to the
+# same branch from the writer's clone, as if someone pushed during the render.
+RACING_GIT = """#!/bin/sh
+if [ "$1" = "push" ]; then
+  echo attempted >> "$PUSH_ATTEMPTS"
+  n=$(grep -c . "$PUSH_ATTEMPTS")
+  if [ "$n" -le "$RACES" ]; then
+    mkdir -p "$(dirname "$RACE_WRITER/$RACE_PATH")"
+    echo "race $n" >> "$RACE_WRITER/$RACE_PATH"
+    "$REAL_GIT" -C "$RACE_WRITER" add -- "$RACE_PATH" || exit $?
+    "$REAL_GIT" -C "$RACE_WRITER" commit --quiet -m "Race $n" || exit $?
+    "$REAL_GIT" -C "$RACE_WRITER" push --quiet origin "HEAD:refs/heads/$CARD_BRANCH" || exit $?
+  fi
+fi
+exec "$REAL_GIT" "$@"
+"""
+
+
+def racing(tmp_path, env, writer, path, races):
     wrapper_dir = tmp_path / "bin"
     wrapper_dir.mkdir()
     wrapper = wrapper_dir / "git"
-    wrapper.write_text(
-        '#!/bin/sh\n'
-        'if [ "$1" = "push" ]; then\n'
-        '  echo attempted >> "$PUSH_ATTEMPTS"\n'
-        '  "$REAL_GIT" -C "$RACE_WRITER" push origin "HEAD:refs/heads/$CARD_BRANCH" || exit $?\n'
-        'fi\n'
-        'exec "$REAL_GIT" "$@"\n'
-    )
+    wrapper.write_text(RACING_GIT)
     wrapper.chmod(0o755)
     attempts = tmp_path / "push-attempts"
     race_env = dict(
@@ -175,11 +197,52 @@ def test_commit_step_does_not_retry_a_rejected_push(repositories, tmp_path):
         PATH=f"{wrapper_dir}{os.pathsep}{env['PATH']}",
         REAL_GIT=shutil.which("git"),
         RACE_WRITER=str(writer),
+        RACE_PATH=path,
+        RACES=str(races),
         PUSH_ATTEMPTS=str(attempts),
     )
+    return race_env, attempts
+
+
+def test_commit_step_retries_when_other_files_land_after_the_fetch(repositories, tmp_path):
+    # The README-style push starts no run, so the step checks again and commits on top.
+    work, writer, rendered, env, git = repositories
+    (rendered / "obsolete.png").unlink()
+    race_env, attempts = racing(tmp_path, env, writer, "source.txt", races=1)
     result = run_commit_step(work, race_env)
-    assert result.returncode != 0
+    assert result.returncode == 0, result.stderr
+    assert attempts.read_text().splitlines() == ["attempted", "attempted"]
+    assert "checking it again" in result.stdout
+    git(writer, "pull", "--ff-only")
+    assert git(writer, "log", "-1", "--format=%s", "HEAD^") == "Race 1"
+    remote_images = writer / "cards/campaigns/example/rendered"
+    assert (remote_images / "current.png").read_bytes() == b"fresh image"
+    assert not (remote_images / "obsolete.png").exists()
+    assert git(writer, "show", "--name-only", "--format=", "HEAD").split() == [
+        "cards/campaigns/example/rendered/current.png",
+        "cards/campaigns/example/rendered/obsolete.png",
+    ]
+
+
+def test_commit_step_leaves_inputs_that_land_after_the_fetch_to_their_own_run(repositories, tmp_path):
+    work, writer, _, env, git = repositories
+    race_env, attempts = racing(tmp_path, env, writer, "cards/campaigns/example/cards.toml", races=1)
+    result = run_commit_step(work, race_env)
+    assert result.returncode == 0, result.stderr
     assert attempts.read_text().splitlines() == ["attempted"]
-    assert git(work, "rev-parse", "HEAD^") != newer_sha
-    assert git(writer, "ls-remote", "origin", f"refs/heads/{env['CARD_BRANCH']}").split()[0] == newer_sha
+    assert "card inputs changed" in result.stdout
+    race = git(writer, "rev-parse", "HEAD")
+    assert git(writer, "ls-remote", "origin", f"refs/heads/{env['CARD_BRANCH']}").split()[0] == race
+    assert (writer / "cards/campaigns/example/rendered/current.png").read_bytes() == b"old image"
+
+
+def test_commit_step_gives_up_after_five_attempts(repositories, tmp_path):
+    work, writer, _, env, git = repositories
+    race_env, attempts = racing(tmp_path, env, writer, "source.txt", races=99)
+    result = run_commit_step(work, race_env)
+    assert result.returncode == 1
+    assert len(attempts.read_text().splitlines()) == 5
+    assert "kept moving" in result.stdout
+    race = git(writer, "rev-parse", "HEAD")
+    assert git(writer, "ls-remote", "origin", f"refs/heads/{env['CARD_BRANCH']}").split()[0] == race
     assert (writer / "cards/campaigns/example/rendered/current.png").read_bytes() == b"old image"

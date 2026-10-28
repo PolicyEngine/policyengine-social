@@ -31,6 +31,7 @@ from __future__ import annotations
 import argparse
 import re
 import tomllib
+import unicodedata
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -141,9 +142,11 @@ def load(folder: Path) -> Campaign:
         value = table[key]
         if not isinstance(value, str):
             fail(scope, key, f"expected a quoted string, got {type(value).__name__}")
-        # ** only marks the accent, so a field of nothing but marks shows nothing.
-        if not value.replace("**", "").strip() and not (optional and value == ""):
-            fail(scope, key, "must not be blank; enter a nonempty quoted string (the ** marks don't count)")
+        # ** only marks the accent, and spaces and format characters (a zero-width
+        # space, say) draw nothing, so a field needs some other character to show.
+        shows = any(unicodedata.category(c)[0] not in "ZC" for c in value.replace("**", ""))
+        if not shows and not (optional and value == ""):
+            fail(scope, key, "must not be blank; enter a nonempty quoted string (the ** marks and invisible characters don't count)")
         return value
 
     def entries(value, scope: str, field: str, *, nonempty: bool = False) -> list:
@@ -362,17 +365,26 @@ def draw_stats(canvas: Card, layout: Layout, card: dict, top: float, bottom: flo
     label_w = left + content - label_x
     rows = []
     for i, stat in enumerate(stats):
-        try:
-            tag = wrap_field(layout, card, f"stat {i + 1} tag", stat["tag"], tag_style, label_w) if stat.get("tag") else []
-            label = wrap_field(layout, card, f"stat {i + 1} label", stat["label"], label_style, label_w)
-        except CardError as error:
-            # The widest value sets the room every tag and label gets, so name it too.
-            widest = max(range(len(stats)), key=lambda j: line_width(words(stats[j]["value"], Style("serif", layout.value, TEAL))))
-            raise CardError(
-                f"{str(error).removeprefix('make_cards: ')} The stat {widest + 1} value, the widest on this card, "
-                f"leaves {max(label_w, 0):.0f}px "
-                "beside it for tags and labels: shorten that value or this text."
-            ) from error
+        wrapped = {}
+        for key, style in [("tag", tag_style)] * bool(stat.get("tag")) + [("label", label_style)]:
+            field = f"stat {i + 1} {key}"
+            try:
+                wrapped[key] = wrap_field(layout, card, field, stat[key], style, label_w)
+            except CardError as error:
+                # The widest value sets the room every tag and label gets. When the
+                # text would fit with no value beside it, that value took the room,
+                # so name it too; otherwise the text alone is too long.
+                try:
+                    wrap_field(layout, card, field, stat[key], style, content - 36)
+                except CardError:
+                    raise error from None
+                widest = max(range(len(stats)), key=lambda j: line_width(words(stats[j]["value"], Style("serif", layout.value, TEAL))))
+                raise CardError(
+                    f"{str(error).removeprefix('make_cards: ')} The stat {widest + 1} value, the widest on this card, "
+                    f"leaves {max(label_w, 0):.0f}px "
+                    "beside it for tags and labels: shorten that value or this text."
+                ) from error
+        tag, label = wrapped.get("tag", []), wrapped["label"]
         height = max(
             metrics("serif", layout.value)[0],
             (len(tag) * layout.tag * 1.35 + 6 if tag else 0) + metrics("sans", layout.label)[0]
