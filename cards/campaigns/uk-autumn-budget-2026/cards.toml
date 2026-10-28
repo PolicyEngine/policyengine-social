@@ -152,10 +152,10 @@ footer = "policyengine.org/uk/budgets/autumn-2026"
 [[card]]
 id = "p6-carers"
 post = "P6"
-gate = "G5 (#1464 merged; held for Max's read); re-check the figures at merge"
+gate = "G5 (#1464 merged; Max has approved the merge); re-check the figures at merge"
 kicker = "UK Autumn Budget 2026 · Carer's Allowance"
 headline = "From 2030-31, a taper replaces the earnings cliff in England and Wales"
-note = "2031-32. The allowance falls by £1 for each £1 of net earnings above the weekly limit, projected at £234. Estimates leave out the person cared for."
+note = "2031-32. The allowance falls by £1 for each £1 of net earnings above the weekly limit, £234 on the OBR's forecast. Estimates leave out the person cared for."
 footer = "policyengine.org/uk/research/carers-allowance-taper"
 
   [[card.stats]]
@@ -165,7 +165,7 @@ footer = "policyengine.org/uk/research/carers-allowance-taper"
 
   [[card.stats]]
   value = "About half"
-  label = "of carers who get more allowance are in families on Universal Credit; almost all lose a little, as Universal Credit falls by the whole extra allowance, which is taxed"
+  label = "of carers who get more allowance are in families on Universal Credit; almost all lose a little, as Universal Credit falls by the whole extra allowance and tax is due on it"
   source = "carers-allowance-taper@de1fa060, line 761"
 
   [[card.stats]]
