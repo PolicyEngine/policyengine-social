@@ -246,3 +246,62 @@ def test_commit_step_gives_up_after_five_attempts(repositories, tmp_path):
     race = git(writer, "rev-parse", "HEAD")
     assert git(writer, "ls-remote", "origin", f"refs/heads/{env['CARD_BRANCH']}").split()[0] == race
     assert (writer / "cards/campaigns/example/rendered/current.png").read_bytes() == b"old image"
+
+
+def test_commit_step_reports_a_refused_push_without_retrying(repositories):
+    # A remote that refuses the push itself (branch protection, say) won't change
+    # its mind on a retry, so the step stops and points at git's error.
+    work, writer, _, env, git = repositories
+    origin = work.parent / "origin.git"
+    attempts = work.parent / "receive-attempts"
+    hook = origin / "hooks/pre-receive"
+    hook.write_text(f'#!/bin/sh\necho attempted >> "{attempts}"\necho "refused by policy" >&2\nexit 1\n')
+    hook.chmod(0o755)
+    before = git(writer, "ls-remote", "origin", f"refs/heads/{env['CARD_BRANCH']}").split()[0]
+    result = run_commit_step(work, env)
+    assert result.returncode == 1
+    assert "refused the push" in result.stdout
+    assert "kept moving" not in result.stdout
+    assert attempts.read_text().splitlines() == ["attempted"]
+    assert git(writer, "ls-remote", "origin", f"refs/heads/{env['CARD_BRANCH']}").split()[0] == before
+
+
+REWINDING_GIT = """#!/bin/sh
+if [ "$1" = "push" ] && [ ! -e "$REWOUND" ]; then
+  touch "$REWOUND"
+  "$REAL_GIT" -C "$RACE_WRITER" push --quiet --force origin "$REWIND_TO:refs/heads/$CARD_BRANCH" || exit $?
+fi
+exec "$REAL_GIT" "$@"
+"""
+
+
+def test_commit_step_does_not_undo_a_rewind_during_the_push(repositories, tmp_path):
+    # Someone pushes a README change, then force-pushes the branch back while the
+    # step pushes. The step's commit sits on the dropped change, so pushing it
+    # would bring that change back; the lease refuses it and the step starts over.
+    work, writer, rendered, env, git = repositories
+    original = git(writer, "rev-parse", "HEAD")
+    dropped = push_from_writer(writer, env, git, "source.txt", "text that gets dropped", "Change that gets dropped")
+    wrapper_dir = tmp_path / "bin"
+    wrapper_dir.mkdir()
+    wrapper = wrapper_dir / "git"
+    wrapper.write_text(REWINDING_GIT)
+    wrapper.chmod(0o755)
+    race_env = dict(
+        env,
+        PATH=f"{wrapper_dir}{os.pathsep}{env['PATH']}",
+        REAL_GIT=shutil.which("git"),
+        RACE_WRITER=str(writer),
+        REWIND_TO=original,
+        REWOUND=str(tmp_path / "rewound"),
+    )
+    result = run_commit_step(work, race_env)
+    assert result.returncode == 0, result.stderr
+    assert "checking it again" in result.stdout
+    tip = git(writer, "ls-remote", "origin", f"refs/heads/{env['CARD_BRANCH']}").split()[0]
+    git(writer, "fetch", "--quiet", "origin")
+    assert git(writer, "rev-parse", f"{tip}^") == original
+    assert subprocess.run(
+        ["git", "-C", str(writer), "merge-base", "--is-ancestor", dropped, tip], env=env
+    ).returncode == 1
+    assert git(writer, "show", f"{tip}:cards/campaigns/example/rendered/current.png") == "fresh image"

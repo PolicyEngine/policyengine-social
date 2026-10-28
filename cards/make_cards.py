@@ -46,6 +46,10 @@ from sharecard import (
 HERE = Path(__file__).resolve().parent
 CAMPAIGNS = HERE / "campaigns"
 
+# Marks that Unicode says draw nothing by default (combining grapheme joiner,
+# Khmer and Mongolian invisible marks, variation selectors, Hangul fillers).
+INVISIBLE_MARKS = re.compile("[\u034f\u115f\u1160\u17b4\u17b5\u180b-\u180f\u3164\ufe00-\ufe0f\uffa0\U000e0100-\U000e01ef]")
+
 
 @dataclass(frozen=True)
 class Layout:
@@ -144,7 +148,7 @@ def load(folder: Path) -> Campaign:
             fail(scope, key, f"expected a quoted string, got {type(value).__name__}")
         # ** only marks the accent, and spaces and format characters (a zero-width
         # space, say) draw nothing, so a field needs some other character to show.
-        shows = any(unicodedata.category(c)[0] not in "ZC" for c in value.replace("**", ""))
+        shows = any(unicodedata.category(c)[0] not in "ZC" and not INVISIBLE_MARKS.match(c) for c in value.replace("**", ""))
         if not shows and not (optional and value == ""):
             fail(scope, key, "must not be blank; enter a nonempty quoted string (the ** marks and invisible characters don't count)")
         return value

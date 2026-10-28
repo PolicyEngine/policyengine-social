@@ -96,8 +96,17 @@ jobs:
               exit 0
             fi
             git commit --quiet -m "Render cards"
-            if git push origin "HEAD:refs/heads/$CARD_BRANCH"; then
+            # The lease lands the push only if the branch still points where we
+            # fetched it, so a rewind in the meantime can't be undone by this push.
+            if git push --force-with-lease="refs/heads/$CARD_BRANCH:$head_sha" origin "HEAD:refs/heads/$CARD_BRANCH"; then
               exit 0
+            fi
+            # Only a branch that moved since the fetch earns another pass;
+            # otherwise the remote refused the push itself.
+            git fetch --no-tags origin "refs/heads/$CARD_BRANCH"
+            if [ "$(git rev-parse FETCH_HEAD)" = "$head_sha" ]; then
+              echo "::error::The remote refused the push of these cards; the git error above says why."
+              exit 1
             fi
             echo "The branch moved after the fetch; checking it again."
           done

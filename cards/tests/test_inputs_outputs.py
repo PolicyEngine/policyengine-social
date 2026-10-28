@@ -49,9 +49,13 @@ def write_campaign(folder, data):
 
 
 MISSING = object()
-# Accent marks, spaces and format characters: a zero-width space, a word
-# joiner, a byte order mark and a soft hyphen.
-BLANK_LOOKING = ("**", "** ** ", "\u200b", "**\u200b**", "\u2060", "\ufeff", "\u00ad", "\u00a0\u3000")
+# Accent marks, spaces, format characters (a zero-width space, a word joiner,
+# a byte order mark, a soft hyphen) and default-ignorable marks (a variation
+# selector, a combining grapheme joiner, Khmer and Mongolian invisible marks).
+BLANK_LOOKING = (
+    "**", "** ** ", "\u200b", "**\u200b**", "\u2060", "\ufeff", "\u00ad", "\u00a0\u3000",
+    "\ufe0f", "\u034f", "\u17b4", "\u180b", "\U000e0100", "**\ufe0f**",
+)
 
 
 @pytest.mark.parametrize(("keys", "value", "scope", "field"), [
