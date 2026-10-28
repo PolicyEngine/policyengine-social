@@ -20,6 +20,11 @@ id = "p1-linkedin-document"
 title = "Four explainers on the UK Autumn Budget 2026"
 cards = ["p1-households", "p1-energy", "p1-pta", "p1-fuel", "p1-triple-lock"]
 
+[[document]]
+id = "p1-p6-linkedin-document"
+title = "Five explainers on the UK Autumn Budget 2026"
+cards = ["p1-households", "p1-energy", "p1-pta", "p1-fuel", "p1-triple-lock", "p6-carers"]
+
 [[card]]
 id = "p1-households"
 post = "P1, lead post"
