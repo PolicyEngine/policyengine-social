@@ -67,6 +67,8 @@ uv run make_cards.py campaigns/uk-autumn-budget-2026
 
 Add card ids after the folder to draw only those, for example `… campaigns/uk-autumn-budget-2026 p1-energy`. With no folder it draws every campaign. It prints every line it draws, so you can check the wording.
 
+A Mac draws the same cards with slightly different anti-aliasing from the action's Linux runner, so the files differ by a few bytes while looking the same. When you push, the action redraws the cards and commits its own versions, so the files on GitHub are always the action's.
+
 Run the tests with:
 
 ```bash

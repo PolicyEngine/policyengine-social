@@ -161,17 +161,17 @@ footer = "policyengine.org/uk/research/carers-allowance-taper"
   [[card.stats]]
   value = "£75"
   label = "a week more for a carer earning £240 a week who does not claim Universal Credit"
-  source = "carers-allowance-taper@38dd6688, line 8"
+  source = "carers-allowance-taper@1147fc44, line 8"
 
   [[card.stats]]
   value = "51%"
   label = "of carers who get more allowance are in families on Universal Credit; almost all lose a little, as Universal Credit falls by the whole extra allowance, which is taxed"
-  source = "carers-allowance-taper@38dd6688, line 757"
+  source = "carers-allowance-taper@1147fc44, line 761"
 
   [[card.stats]]
   value = "£48m"
-  label = "our net cost in 2031-32; about £55m with a Universal Credit tax adjustment the dashboard lacks. The Treasury's £80m includes changes in hours worked, which we don't model"
-  source = "carers-allowance-taper@38dd6688, lines 10, 44, 744 and 759; Table 6.1 row 7"
+  label = "our net cost in 2031-32, after income tax. The government's OBR-certified £79m has no income tax line and includes £10m of block grant for Scotland"
+  source = "carers-allowance-taper@1147fc44, lines 10, 44 and 763; OBR, EFO October 2026, detailed forecast tables: policy, Table 1.1, measure 7"
 
 [[card]]
 id = "p1-triple-lock"
@@ -183,10 +183,10 @@ note = "Pre-Budget and provisional: our figures use the OBR's March 2026 forecas
 footer = "policyengine.org/uk/research/uk-triple-lock-budget-2026"
 
   [[card.stats]]
-  tag = "Government estimate"
+  tag = "DWP estimate, 2039-40"
   value = "£15bn"
-  label = "a year saved by the late 2030s (DWP, Great Britain)"
-  source = "uk-triple-lock-budget-2026, line 1 and line 119"
+  label = "saved in Great Britain, in cash terms"
+  source = "DWP, State Pension uprating analysis 2026, Table 1; uk-triple-lock-budget-2026, line 119"
 
   [[card.stats]]
   tag = "Our estimate, 2039-40"
