@@ -1,0 +1,117 @@
+name: Render cards
+
+# Edit a campaign's cards.toml (on GitHub or locally) and push. This tests the
+# renderer, draws every card, and commits the PNGs and PDFs back to the same
+# branch. It never posts anything: posting only happens from posts/queue/.
+on:
+  push:
+    branches: ["**"]
+    paths:
+      - "cards/**"
+      - ".github/workflows/render-cards.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: render-cards-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  render:
+    if: github.ref_type == 'branch'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        # Named, bash runs with -eo pipefail, as the commit step's tests do;
+        # left unnamed, GitHub runs plain bash -e.
+        shell: bash
+        working-directory: cards
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install librsvg (funder logos) and FriBiDi (kerning)
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends librsvg2-bin libfribidi0
+
+      - uses: astral-sh/setup-uv@v10.3.3
+
+      - name: Test the renderer
+        run: uv run --locked --group dev pytest -q
+
+      - name: Render every campaign
+        run: uv run --locked make_cards.py
+
+      - name: Keep the rendered cards as a download
+        uses: actions/upload-artifact@v7
+        with:
+          name: cards
+          path: cards/campaigns/*/rendered/
+
+      - name: Commit the rendered cards to this branch
+        env:
+          CARD_BRANCH: ${{ github.ref_name }}
+        run: |
+          rendered_sha=$(git rev-parse HEAD)
+          saved=$(mktemp -d)
+          cp -a campaigns "$saved/"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # A push can land between the fetch and our push. Each pass checks the
+          # branch afresh against the commit these cards came from, so a retry
+          # never commits images older than the text they show.
+          for attempt in 1 2 3 4 5; do
+            git fetch --no-tags origin "refs/heads/$CARD_BRANCH"
+            head_sha=$(git rev-parse FETCH_HEAD)
+            if [ "$head_sha" != "$rendered_sha" ]; then
+              if ! git merge-base --is-ancestor "$rendered_sha" "$head_sha"; then
+                echo "::error::The branch was rewritten while these cards rendered. Run Render cards again on the branch (Actions, Render cards, Run workflow)."
+                exit 1
+              fi
+              # Every render input matches the push paths above, so a push that
+              # changes one starts its own run, which draws the newer text.
+              if ! git diff --quiet "$rendered_sha" "$head_sha" -- . ':(exclude)campaigns/*/rendered/*' ../.github/workflows/render-cards.yml; then
+                # Unless a newer commit asks GitHub to skip its runs.
+                # (grep reads all of its input, so git log never dies of SIGPIPE under pipefail.)
+                if git log --format=%B "$rendered_sha..$head_sha" | grep -iE '\[(skip ci|ci skip|no ci|skip actions|actions skip)\]|^skip-checks: ?true' >/dev/null; then
+                  echo "::error::The branch's card inputs changed while these cards rendered, and a newer commit skips CI, so no run will draw them. Run Render cards again on the branch (Actions, Render cards, Run workflow)."
+                  exit 1
+                fi
+                echo "The branch moved and its card inputs changed while these cards rendered; the newer run will render them."
+                exit 0
+              fi
+              # Only files the cards don't read changed (a README, say), and a push
+              # of those starts no run: these images still match, so commit them
+              # on top of the newer commit.
+              echo "The branch moved, but not its card inputs; committing these cards on top of it."
+            fi
+            if [ "$head_sha" != "$(git rev-parse HEAD)" ]; then
+              git checkout --quiet --force "$head_sha"
+              rm -rf campaigns/*/rendered
+              for dir in "$saved"/campaigns/*/rendered; do
+                [ -d "$dir" ] || continue
+                cp -a "$dir" "campaigns/$(basename "$(dirname "$dir")")/"
+              done
+            fi
+            git add --all -- campaigns/*/rendered
+            if git diff --cached --quiet; then
+              echo "The rendered cards are already up to date."
+              exit 0
+            fi
+            git commit --quiet -m "Render cards"
+            # The lease lands the push only if the branch still points where we
+            # fetched it, so a rewind in the meantime can't be undone by this push.
+            if git push --force-with-lease="refs/heads/$CARD_BRANCH:$head_sha" origin "HEAD:refs/heads/$CARD_BRANCH"; then
+              exit 0
+            fi
+            # Only a branch that moved since the fetch earns another pass;
+            # otherwise the remote refused the push itself.
+            git fetch --no-tags origin "refs/heads/$CARD_BRANCH"
+            if [ "$(git rev-parse FETCH_HEAD)" = "$head_sha" ]; then
+              echo "::error::The remote refused the push of these cards; the git error above says why."
+              exit 1
+            fi
+            echo "The branch moved after the fetch; checking it again."
+          done
+          echo "::error::The branch kept moving while this run committed its cards. Run Render cards again on the branch (Actions, Render cards, Run workflow)."
+          exit 1

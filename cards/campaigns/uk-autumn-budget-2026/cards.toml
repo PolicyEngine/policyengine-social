@@ -1,0 +1,267 @@
+# Cards for PolicyEngine's posts on the UK Autumn Budget 2026 (28 October 2026).
+# make_cards.py draws exactly this text and nothing else. Edit it here, then
+# render (see cards/README.md): on GitHub, committing this file renders the
+# cards for you.
+#
+# Each card has a line above the headline (`kicker`), a serif `headline`, two
+# or three `stats` (a large `value`, a short `label`, an optional small `tag`
+# above the value), an optional `note` in small type, and a `footer` (the
+# link). `post` and `gate` say where the card goes and what it waits on; they
+# are printed, not drawn. Each stat names where its figure comes from
+# (`source`), so a reviewer can trace it: change a figure only with its source.
+
+[campaign]
+name = "UK Autumn Budget 2026"
+funder = "nuffield"  # "Funded by" and the Nuffield Foundation logo, small, top right
+
+# A LinkedIn document post: these square cards, one per page, as one PDF.
+[[document]]
+id = "p1-linkedin-document"
+title = "Four explainers on the UK Autumn Budget 2026"
+cards = ["p1-households", "p1-energy", "p1-pta", "p1-fuel", "p1-triple-lock"]
+
+[[document]]
+id = "p1-p6-linkedin-document"
+title = "Five explainers on the UK Autumn Budget 2026"
+cards = ["p1-households", "p1-energy", "p1-pta", "p1-fuel", "p1-triple-lock", "p6-carers"]
+
+[[document]]
+id = "p1-p5-p6-linkedin-document"
+title = "Seven explainers on the UK Autumn Budget 2026"
+cards = ["p1-households", "p1-energy", "p1-pta", "p1-fuel", "p1-triple-lock", "p6-carers", "p5-property", "p5-trading"]
+
+[[document]]
+id = "six-explainers-linkedin-document"
+title = "Six explainers on the UK Autumn Budget 2026"
+cards = ["p1-households", "p1-energy", "p1-pta", "p1-fuel", "p6-carers", "p5-property", "p5-trading"]
+
+[[card]]
+id = "p1-households"
+post = "P1, lead post"
+gate = "none: the four explainers are live"
+kicker = "UK Autumn Budget 2026 · Household examples"
+headline = "What the Budget means for example households"
+note = "PolicyEngine UK household calculations. Fuel assumes retailers pass on the cut in full and a pre-Budget duty rate of 60.59p a litre from April 2027."
+footer = "policyengine.org/uk/research"
+
+  [[card.stats]]
+  tag = "Energy bills"
+  value = "£135"
+  label = "over 2026-27 and 2027-28 for a band A to D home in England using 2,500 kWh a year"
+  source = "budget-2026-energy-bills, Table 2"
+
+  [[card.stats]]
+  tag = "Pension Tax Allowance"
+  value = "£0"
+  label = "income tax in 2027-28 for a pensioner with the standard Personal Allowance and income up to £13,036, all taxed at 20%"
+  source = "pension-tax-allowance, key figures"
+
+  [[card.stats]]
+  tag = "Fuel duty"
+  value = "£34"
+  label = "less over 2026-27 and 2027-28 for a household using 1,000 litres a year"
+  source = "fuel-duty-cut-extension, key figures"
+
+[[card]]
+id = "p1-energy"
+post = "P1, energy reply"
+gate = "none: live"
+kicker = "UK Autumn Budget 2026 · Energy bills"
+headline = "The £100 payment and zero VAT on electricity, for a household using 2,500 kWh a year"
+note = "Change in net income, 2026-27 and 2027-28 combined. Typical consumption per Ofgem. Wales and Scotland plan their own £100 payments, which we don't model."
+footer = "policyengine.org/uk/research/budget-2026-energy-bills"
+
+  [[card.stats]]
+  tag = "England, bands A to D"
+  value = "£135"
+  label = "the £100 payment plus the VAT cut"
+  source = "budget-2026-energy-bills, Table 2"
+
+  [[card.stats]]
+  tag = "England E to H, Wales, Scotland"
+  value = "£35"
+  label = "the VAT cut alone"
+  source = "budget-2026-energy-bills, Table 2"
+
+  [[card.stats]]
+  tag = "Northern Ireland"
+  value = "£10"
+  label = "the VAT cut, which we expect there from April 2027"
+  source = "budget-2026-energy-bills, Table 2"
+
+[[card]]
+id = "p1-pta"
+post = "P1, Pension Tax Allowance reply"
+gate = "none: live"
+kicker = "UK Autumn Budget 2026 · Pension Tax Allowance"
+headline = "In 2027-28, a pensioner taxed at 20% with income up to the full new State Pension pays no income tax"
+note = "2027-28, with the standard Personal Allowance. The allowance applies for three tax years, to 5 April 2030."
+footer = "policyengine.org/uk/research/pension-tax-allowance"
+
+  [[card.stats]]
+  value = "£13,036"
+  label = "the full new State Pension, £466 above the Personal Allowance"
+  source = "pension-tax-allowance, key figures"
+
+  [[card.stats]]
+  value = "£94"
+  label = "the full allowance, which falls by £1 for each £3 of income above £13,036"
+  source = "pension-tax-allowance, key figures"
+
+  [[card.stats]]
+  value = "53.3%"
+  label = "effective marginal tax rate while it tapers, outside Scotland"
+  source = "pension-tax-allowance, key figures"
+
+[[card]]
+id = "p1-fuel"
+post = "P1, fuel duty reply"
+gate = "none: live"
+kicker = "UK Autumn Budget 2026 · Fuel duty"
+headline = "The 5p cut runs to 1 July 2027. Duty and VAT saved on each litre:"
+note = "Against the rates before the Budget, with VAT at 20% on the duty, if retailers pass the cut on in full. April to June assumes a pre-Budget rate of 60.59p, which the government had not set."
+footer = "policyengine.org/uk/research/fuel-duty-cut-extension"
+
+  [[card.stats]]
+  tag = "January and February 2027"
+  value = "3.6p"
+  label = "a litre"
+  source = "fuel-duty-cut-extension, rate table"
+
+  [[card.stats]]
+  tag = "March 2027"
+  value = "6.0p"
+  label = "a litre"
+  source = "fuel-duty-cut-extension, rate table"
+
+  [[card.stats]]
+  tag = "April to June 2027"
+  value = "9.2p"
+  label = "a litre"
+  source = "fuel-duty-cut-extension on app-v2 main 81eb8079, key figures; assumption at line 522"
+
+[[card]]
+id = "p2-dashboard"
+post = "P2"
+gate = "G1: production shows published figures"
+kicker = "UK Autumn Budget 2026 · Our first estimates"
+headline = "Seven of the Budget's measures, for the UK and for your household"
+note = "Energy payment · Electricity VAT · Fuel duty · Pension Tax Allowance · Carer's Allowance taper · Property income tax rates · Trading allowance"
+footer = "policyengine.org/uk/budgets/autumn-2026"
+
+  [[card.stats]]
+  value = "Cost"
+  label = "what each measure costs the public finances, year by year"
+  source = "dashboard tabs (no figure on this card)"
+
+  [[card.stats]]
+  value = "Who gains"
+  label = "by income, area and age"
+  source = "dashboard tabs (no figure on this card)"
+
+  [[card.stats]]
+  value = "You"
+  label = "what the measures mean for your own household"
+  source = "dashboard household calculator (no figure on this card)"
+
+[[card]]
+id = "p6-carers"
+post = "P6"
+gate = "G5 (#1464 merged; Max has approved the merge); re-check the figures at merge"
+kicker = "UK Autumn Budget 2026 · Carer's Allowance"
+headline = "From 2030-31, a taper replaces the earnings cliff in England and Wales"
+note = "2031-32. The allowance falls by £1 for each £1 of net earnings above the weekly limit, £234 on the OBR's forecast. Estimates leave out the effect on the person they care for."
+footer = "policyengine.org/uk/research/carers-allowance-taper"
+
+  [[card.stats]]
+  value = "£75"
+  label = "a week more for a carer earning £240 a week who does not claim Universal Credit"
+  source = "carers-allowance-taper@30ed1c3a, line 8"
+
+  [[card.stats]]
+  value = "About half"
+  label = "of carers who get more allowance live in families on Universal Credit; almost all of them lose a little, as Universal Credit falls by the whole extra allowance and tax is due on it"
+  source = "carers-allowance-taper@30ed1c3a, line 761"
+
+  [[card.stats]]
+  value = "£48m"
+  label = "net cost in 2031-32 after lower Universal Credit and higher income tax, assuming no behavioural responses"
+  source = "carers-allowance-taper on app-v2 main 81eb8079, lines 748 and 765"
+
+[[card]]
+id = "p1-triple-lock"
+post = "P1, triple lock reply"
+gate = "none: live; figures pre-Budget and provisional, labelled as such"
+kicker = "UK Autumn Budget 2026 · Triple lock"
+headline = "From April 2030, a floor at the pension's April 2029 ratio to earnings replaces earnings growth"
+note = "Pre-Budget: our figures use the OBR's March 2026 forecast, and we are rebuilding them on the Budget's inputs."
+footer = "policyengine.org/uk/research/uk-triple-lock-budget-2026"
+
+  [[card.stats]]
+  tag = "OBR central path"
+  value = "£0.9bn"
+  label = "saving in 2039-40, with earnings growth highest every year from April 2032"
+  source = "uk-triple-lock-budget-2026 on app-v2 main 81eb8079, line 11"
+
+  [[card.stats]]
+  tag = "OBR long-term assumption"
+  value = "£10.3bn"
+  label = "saving in 2039-40, or £7.3bn after lower income tax and higher means-tested benefits"
+  source = "uk-triple-lock-budget-2026 on app-v2 main 81eb8079, lines 11 and 12"
+
+  [[card.stats]]
+  value = "27%"
+  label = "of UK households have less income in 2039-40 on the long-term assumption"
+  source = "uk-triple-lock-budget-2026 on app-v2 main 81eb8079, line 14"
+
+[[card]]
+id = "p5-property"
+post = "P5, property reply on X and Bluesky; LinkedIn image 1"
+gate = "G3 (#1460 merged on Max's yes); re-check the figures at merge"
+kicker = "UK Autumn Budget 2026 · Property income"
+headline = "From April 2027, income tax rates on property income rise to 24%, 44% and 49% outside Scotland"
+note = "2027-28. Landlord in England with £10,000 of property profit. Finance-cost relief follows the property basic rate."
+footer = "policyengine.org/uk/research"
+
+  [[card.stats]]
+  value = "+2 points"
+  label = "on the basic, higher and additional rates for property income"
+  source = "property post @e53a1d3c, line 1"
+
+  [[card.stats]]
+  tag = "No mortgage"
+  value = "+£200"
+  label = "income tax in 2027-28"
+  source = "property post @e53a1d3c, line 6"
+
+  [[card.stats]]
+  tag = "£4,000 of fully usable mortgage interest"
+  value = "+£120"
+  label = "income tax in 2027-28, as finance-cost relief rises too"
+  source = "property post @e53a1d3c, line 5"
+
+[[card]]
+id = "p5-trading"
+post = "P5, trading reply on X and Bluesky; LinkedIn image 2"
+gate = "G4 (#1463 merged); re-check the figures at merge"
+kicker = "UK Autumn Budget 2026 · Trading allowance"
+headline = "From April 2027, the trading allowance triples to £3,000"
+note = "2027-28. The allowance covers eligible trading and miscellaneous income."
+footer = "policyengine.org/uk/research"
+
+  [[card.stats]]
+  value = "£3,000"
+  label = "tax-free trading and miscellaneous income a year, up from £1,000"
+  source = "trading post @f6fa173e, line 1"
+
+  [[card.stats]]
+  tag = "Employee with side income"
+  value = "−£400"
+  label = "income tax for someone paying 20% on side income"
+  source = "trading post @f6fa173e, line 5"
+
+  [[card.stats]]
+  tag = "Sole trader"
+  value = "−£520"
+  label = "income tax and Class 4 National Insurance on £20,000 of receipts and £500 of expenses"
+  source = "trading post @f6fa173e, line 6 and table at line 350"
