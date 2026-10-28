@@ -156,12 +156,12 @@ src/policyengine_social/
 │   └── zapier.py       # LinkedIn via Zapier
 ├── extract.py          # Blog image extraction
 └── generate.py         # Auto-generate posts
-```
 
 cards/                  # Share cards: images drawn from a text file per campaign
 ├── campaigns/<name>/cards.toml   # the words on each card
 ├── campaigns/<name>/rendered/    # the PNGs and PDFs, drawn by the Render cards action
 └── make_cards.py
+```
 
 ## Share cards
 

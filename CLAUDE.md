@@ -37,7 +37,7 @@ This repository handles automated social media posting for PolicyEngine across m
 - Every stat keeps a `source`; change a figure only with its source.
 - In post text, credit a funder once per thread (the first post) and once per LinkedIn post, never in every reply.
 
-Run the card tests from `cards/` with `uv run --group dev pytest` (on a Mac, prefix `DYLD_FALLBACK_LIBRARY_PATH=/opt/homebrew/lib`).
+Run the card tests from `cards/` with `uv run --group dev pytest` (on a Mac, prefix `DYLD_FALLBACK_LIBRARY_PATH="$(brew --prefix)/lib"`).
 
 ## Environment Setup
 

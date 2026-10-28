@@ -12,9 +12,10 @@ Each card comes in two sizes: `<id>.png` (1200×675) for X and Bluesky, and `<id
 
 1. Open the campaign's `cards.toml` on GitHub and click the pencil icon (Edit this file).
 2. Change the words. Keep the quotation marks around each piece of text.
-3. Click **Commit changes**. Commit to `master` to have the cards drawn straight away, or choose **Create a new branch** to open a pull request for someone to look at first.
-4. The **Render cards** action runs (see the Actions tab, or the yellow dot then green tick beside the commit). When it finishes, it commits the new images to the campaign's `rendered/` folder on the same branch. Open an image on GitHub and click **Download raw file**. The run's Summary page also has every card as one zip, named `cards`.
-5. If some text doesn't fit, the action fails (a red cross) and draws nothing for that card. Its log names the card and the problem, for example `p1-energy-square: the headline needs more than 3 lines`. Shorten that text and commit again.
+3. Click **Commit changes** to open the commit dialog. Choose **Create a new branch**, give the branch a name, and click **Propose changes**. On the next page, click **Create pull request** so someone can review the change.
+4. To commit directly to the current branch instead, choose that option in the commit dialog and click **Commit changes**.
+5. The **Render cards** action runs (see the Actions tab, or the yellow dot then green tick beside the commit). When it finishes, it commits the new images to the campaign's `rendered/` folder on the same branch. Open an image on GitHub and click **Download raw file**. The run's Summary page also has every card as one zip, named `cards`.
+6. If some text doesn't fit, the action fails (a red cross) and draws nothing for that card. Its log names the card and the problem, for example `p1-energy-square: the headline needs more than 3 lines`. Shorten that text and commit again.
 
 The action never posts anything. Posting only happens from `posts/queue/` (see the main README).
 
@@ -62,7 +63,7 @@ brew install librsvg fribidi uv
 Then, from this `cards` folder:
 
 ```bash
-uv run make_cards.py campaigns/uk-autumn-budget-2026
+DYLD_FALLBACK_LIBRARY_PATH="$(brew --prefix)/lib" uv run make_cards.py campaigns/uk-autumn-budget-2026
 ```
 
 Add card ids after the folder to draw only those, for example `… campaigns/uk-autumn-budget-2026 p1-energy`. With no folder it draws every campaign. It prints every line it draws, so you can check the wording.
@@ -72,7 +73,7 @@ A Mac draws the same cards with slightly different anti-aliasing from the action
 Run the tests with:
 
 ```bash
-DYLD_FALLBACK_LIBRARY_PATH=/opt/homebrew/lib uv run --group dev pytest
+DYLD_FALLBACK_LIBRARY_PATH="$(brew --prefix)/lib" uv run --group dev pytest
 ```
 
 ## Where things come from
