@@ -179,26 +179,26 @@ post = "P1, triple lock reply"
 gate = "none: live; figures pre-Budget and provisional, labelled as such"
 kicker = "UK Autumn Budget 2026 · Triple lock"
 headline = "From April 2030, a floor at the pension's April 2029 ratio to earnings replaces earnings growth"
-note = "Pre-Budget and provisional: our figures use the OBR's March 2026 forecast, and we are rebuilding them on the Budget's inputs."
+note = "Pre-Budget: our figures use the OBR's March 2026 forecast, and we are rebuilding them on the Budget's inputs."
 footer = "policyengine.org/uk/research/uk-triple-lock-budget-2026"
 
   [[card.stats]]
   tag = "DWP estimate, 2039-40"
   value = "£15bn"
   label = "saved in Great Britain, in cash terms"
-  source = "DWP, State Pension uprating analysis 2026, Table 1; uk-triple-lock-budget-2026, line 119"
+  source = "DWP, State Pension uprating analysis 2026, Table 1; uk-triple-lock-budget-2026@ac6004b9, line 7"
 
   [[card.stats]]
-  tag = "Our estimate, 2039-40"
-  value = "£10.8bn"
-  label = "gross saving in Great Britain, averaged across 50,000 paths of prices and earnings"
-  source = "uk-triple-lock-budget-2026, lines 7 and 119"
+  tag = "Ours: OBR long-term assumption"
+  value = "£10.0bn"
+  label = "Great Britain, if the pension rises 0.6 points a year faster than earnings"
+  source = "uk-triple-lock-budget-2026@ac6004b9, lines 11 and 13"
 
   [[card.stats]]
-  tag = "Our estimate, 2039-40"
-  value = "£931"
-  label = "a year lower full new State Pension, on average across the paths"
-  source = "uk-triple-lock-budget-2026, line 9"
+  tag = "Ours: OBR central path"
+  value = "£0.8bn"
+  label = "Great Britain, with earnings growth highest every year from April 2032"
+  source = "uk-triple-lock-budget-2026@ac6004b9, lines 11 and 13"
 
 [[card]]
 id = "p5-property"
@@ -212,19 +212,19 @@ footer = "policyengine.org/uk/research"
   [[card.stats]]
   value = "+2 points"
   label = "on the basic, higher and additional rates for property income"
-  source = "property post @5772c917, line 1"
+  source = "property post @91f812f9, line 1"
 
   [[card.stats]]
   tag = "No mortgage"
   value = "+£200"
   label = "income tax in 2027-28"
-  source = "property post @5772c917, line 6"
+  source = "property post @91f812f9, line 6"
 
   [[card.stats]]
   tag = "£4,000 of fully usable mortgage interest"
   value = "+£120"
   label = "income tax in 2027-28, as finance-cost relief rises too"
-  source = "property post @5772c917, line 5"
+  source = "property post @91f812f9, line 5"
 
 [[card]]
 id = "p5-trading"
@@ -238,16 +238,16 @@ footer = "policyengine.org/uk/research"
   [[card.stats]]
   value = "£3,000"
   label = "tax-free trading and miscellaneous income a year, up from £1,000"
-  source = "trading post @e43f96b3, line 1"
+  source = "trading post @3cb9b8b7, line 1"
 
   [[card.stats]]
   tag = "Employee with side income"
   value = "−£400"
   label = "income tax for someone paying 20% on side income"
-  source = "trading post @e43f96b3, line 5"
+  source = "trading post @3cb9b8b7, line 5"
 
   [[card.stats]]
   tag = "Sole trader"
   value = "−£520"
   label = "income tax and Class 4 National Insurance on £20,000 of receipts and £500 of expenses"
-  source = "trading post @e43f96b3, line 6 and table at line 350"
+  source = "trading post @3cb9b8b7, line 6 and table at line 350"
