@@ -36,3 +36,6 @@ assets/temp/
 # Don't commit raw screenshots (too large)
 assets/screenshots/*.png
 !assets/screenshots/.gitkeep
+# Share cards
+cards/.venv/
+cards/.hypothesis/

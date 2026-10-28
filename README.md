@@ -158,6 +158,15 @@ src/policyengine_social/
 └── generate.py         # Auto-generate posts
 ```
 
+cards/                  # Share cards: images drawn from a text file per campaign
+├── campaigns/<name>/cards.toml   # the words on each card
+├── campaigns/<name>/rendered/    # the PNGs and PDFs, drawn by the Render cards action
+└── make_cards.py
+
+## Share cards
+
+`cards/` draws the images that go with posts, from one text file per campaign. Edit a campaign's `cards.toml` on GitHub and the **Render cards** action draws the cards and commits them back to the branch; it never posts. See [cards/README.md](cards/README.md).
+
 ## Content Routing
 
 The system automatically routes content to appropriate accounts:

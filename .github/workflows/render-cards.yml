@@ -1,0 +1,57 @@
+name: Render cards
+
+# Edit a campaign's cards.toml (on GitHub or locally) and push. This tests the
+# renderer, draws every card, and commits the PNGs and PDFs back to the same
+# branch. It never posts anything: posting only happens from posts/queue/.
+on:
+  push:
+    paths:
+      - "cards/**"
+      - ".github/workflows/render-cards.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: render-cards-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: cards
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install librsvg (funder logos) and FriBiDi (kerning)
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends librsvg2-bin libfribidi0
+
+      - uses: astral-sh/setup-uv@v10
+
+      - name: Test the renderer
+        run: uv run --locked --group dev pytest -q
+
+      - name: Render every campaign
+        run: uv run --locked make_cards.py
+
+      - name: Keep the rendered cards as a download
+        uses: actions/upload-artifact@v7
+        with:
+          name: cards
+          path: cards/campaigns/*/rendered/
+
+      - name: Commit the rendered cards to this branch
+        run: |
+          git add campaigns/*/rendered
+          if git diff --cached --quiet; then
+            echo "The rendered cards are already up to date."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Render cards"
+          git pull --rebase origin "$GITHUB_REF_NAME"
+          git push origin "HEAD:$GITHUB_REF_NAME"

@@ -29,6 +29,16 @@ This repository handles automated social media posting for PolicyEngine across m
 - X (Twitter): @thepolicyengine, @policyengineus, @policyengineuk
 - LinkedIn: Via Zapier webhooks
 
+## Share cards (`cards/`)
+
+`cards/make_cards.py` draws post images from `cards/campaigns/<name>/cards.toml`; the Render cards workflow re-draws them on every push that touches `cards/` and commits them to the branch. Rendering never posts. Keep to these rules (Max Ghenis, 28 October 2026):
+- Our wordmark alone at the bottom right; a funder's credit small at the top right, never beside our logo. The tests check this.
+- Sentence case on every line, the kicker included. No emoji.
+- Every stat keeps a `source`; change a figure only with its source.
+- In post text, credit a funder once per thread (the first post) and once per LinkedIn post, never in every reply.
+
+Run the card tests from `cards/` with `uv run --group dev pytest` (on a Mac, prefix `DYLD_FALLBACK_LIBRARY_PATH=/opt/homebrew/lib`).
+
 ## Environment Setup
 
 ### Required Environment Variables
