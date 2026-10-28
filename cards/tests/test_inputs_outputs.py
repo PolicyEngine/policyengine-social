@@ -145,7 +145,9 @@ def test_cli_failures_are_actionable_without_tracebacks(tmp_path, problem):
             args.append("absent")
     result = subprocess.run(
         [sys.executable, str(HERE / "make_cards.py"), str(tmp_path), *args],
-        capture_output=True, text=True, timeout=20,
+        # Cold Pillow/NumPy imports can exceed 20 seconds on a loaded Mac
+        # while four rendering workers run. This tests diagnostics, not speed.
+        capture_output=True, text=True, timeout=120,
     )
     assert result.returncode != 0
     assert "make_cards:" in result.stderr
