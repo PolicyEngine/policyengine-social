@@ -48,6 +48,7 @@ To add a card, copy a whole `[[card]]` block, give it a new `id` and change its 
 
 - **Sentence case** for every line, kicker included: capitalise only the first word and proper nouns.
 - **No emoji.** The renderer refuses a character the fonts can't draw.
+- **Active voice**, and "exceeds" for "is above": "the OBR certified", "earnings exceed the limit". A prepositional "above" stays, as in "£1 for each £1 above the limit" (Max Ghenis, 28 October 2026).
 - **Every figure names its source.** Change a figure only with its source, and say what changed.
 - **The card is PolicyEngine's.** Our wordmark sits alone at the bottom right. A funder's credit is small, at the top right, in a different corner: side by side at the same size the two logos read as a partnership (Max Ghenis, 28 October 2026). The funder's logo is drawn from the file they supplied; the renderer refuses an altered copy.
 - **In the posts themselves**, credit the funder once per thread, in the first post, and once in each LinkedIn post. The credit on every card is enough for the replies.
