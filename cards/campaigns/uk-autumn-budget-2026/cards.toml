@@ -212,19 +212,19 @@ footer = "policyengine.org/uk/research"
   [[card.stats]]
   value = "+2 points"
   label = "on the basic, higher and additional rates for property income"
-  source = "property post @91f812f9, line 1"
+  source = "property post @e53a1d3c, line 1"
 
   [[card.stats]]
   tag = "No mortgage"
   value = "+£200"
   label = "income tax in 2027-28"
-  source = "property post @91f812f9, line 6"
+  source = "property post @e53a1d3c, line 6"
 
   [[card.stats]]
   tag = "£4,000 of fully usable mortgage interest"
   value = "+£120"
   label = "income tax in 2027-28, as finance-cost relief rises too"
-  source = "property post @91f812f9, line 5"
+  source = "property post @e53a1d3c, line 5"
 
 [[card]]
 id = "p5-trading"
@@ -238,16 +238,16 @@ footer = "policyengine.org/uk/research"
   [[card.stats]]
   value = "£3,000"
   label = "tax-free trading and miscellaneous income a year, up from £1,000"
-  source = "trading post @3cb9b8b7, line 1"
+  source = "trading post @f6fa173e, line 1"
 
   [[card.stats]]
   tag = "Employee with side income"
   value = "−£400"
   label = "income tax for someone paying 20% on side income"
-  source = "trading post @3cb9b8b7, line 5"
+  source = "trading post @f6fa173e, line 5"
 
   [[card.stats]]
   tag = "Sole trader"
   value = "−£520"
   label = "income tax and Class 4 National Insurance on £20,000 of receipts and £500 of expenses"
-  source = "trading post @3cb9b8b7, line 6 and table at line 350"
+  source = "trading post @f6fa173e, line 6 and table at line 350"
