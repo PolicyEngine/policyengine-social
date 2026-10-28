@@ -24,6 +24,9 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
+        # Named, bash runs with -eo pipefail, as the commit step's tests do;
+        # left unnamed, GitHub runs plain bash -e.
+        shell: bash
         working-directory: cards
     steps:
       - uses: actions/checkout@v7

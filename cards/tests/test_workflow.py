@@ -65,7 +65,7 @@ def repositories(tmp_path):
 
 def run_commit_step(work, env):
     return subprocess.run(
-        # GitHub runs each step with these flags.
+        # GitHub runs a step with these flags when the workflow names shell: bash.
         ["bash", "--noprofile", "--norc", "-eo", "pipefail", "-c", commit_script()],
         cwd=work / "cards",
         env=env,
@@ -305,3 +305,11 @@ def test_commit_step_does_not_undo_a_rewind_during_the_push(repositories, tmp_pa
         ["git", "-C", str(writer), "merge-base", "--is-ancestor", dropped, tip], env=env
     ).returncode == 1
     assert git(writer, "show", f"{tip}:cards/campaigns/example/rendered/current.png") == "fresh image"
+
+
+def test_workflow_names_bash_so_steps_run_with_pipefail():
+    # The commit step's tests run it with -eo pipefail, which GitHub uses only
+    # when the workflow names shell: bash.
+    workflow = WORKFLOW.read_text()
+    assert "    defaults:\n      run:\n" in workflow
+    assert "        shell: bash\n" in workflow.split("    steps:", 1)[0]

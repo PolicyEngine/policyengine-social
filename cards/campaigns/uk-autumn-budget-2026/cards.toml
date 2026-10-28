@@ -138,7 +138,7 @@ footer = "policyengine.org/uk/research/fuel-duty-cut-extension"
   tag = "April to June 2027"
   value = "9.2p"
   label = "a litre"
-  source = "fuel-duty-cut-extension, key figures; assumption at line 518"
+  source = "fuel-duty-cut-extension on app-v2 main 81eb8079, key figures; assumption at line 522"
 
 [[card]]
 id = "p2-dashboard"
