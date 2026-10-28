@@ -161,17 +161,17 @@ footer = "policyengine.org/uk/research/carers-allowance-taper"
   [[card.stats]]
   value = "£75"
   label = "a week more for a carer earning £240 a week who does not claim Universal Credit"
-  source = "carers-allowance-taper@de1fa060, line 8"
+  source = "carers-allowance-taper@30ed1c3a, line 8"
 
   [[card.stats]]
   value = "About half"
-  label = "of carers who get more allowance are in families on Universal Credit; almost all lose a little, as Universal Credit falls by the whole extra allowance and tax is due on it"
-  source = "carers-allowance-taper@de1fa060, line 761"
+  label = "of carers who get more allowance live in families on Universal Credit; almost all lose a little, as Universal Credit falls by the whole extra allowance and tax is due on it"
+  source = "carers-allowance-taper@30ed1c3a, line 761"
 
   [[card.stats]]
   value = "£48m"
   label = "our net cost in 2031-32, after income tax. The government's OBR-certified £79m has no income tax line and includes £10m of block grant for Scotland"
-  source = "carers-allowance-taper@de1fa060, lines 10, 44 and 763; OBR, EFO October 2026, detailed forecast tables: policy, Table 1.1, measure 7"
+  source = "carers-allowance-taper@30ed1c3a, lines 10, 44 and 763; OBR, EFO October 2026, detailed forecast tables: policy, Table 1.1, measure 7"
 
 [[card]]
 id = "p1-triple-lock"
