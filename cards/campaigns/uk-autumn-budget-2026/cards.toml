@@ -63,7 +63,7 @@ post = "P1, energy reply"
 gate = "none: live"
 kicker = "UK Autumn Budget 2026 · Energy bills"
 headline = "The £100 payment and zero VAT on electricity, for a household using 2,500 kWh a year"
-note = "Change in net income, 2026-27 and 2027-28 combined. Typical consumption per Ofgem."
+note = "Change in net income, 2026-27 and 2027-28 combined. Typical consumption per Ofgem. Wales and Scotland plan their own £100 payments, which we don't model."
 footer = "policyengine.org/uk/research/budget-2026-energy-bills"
 
   [[card.stats]]
