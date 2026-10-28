@@ -15,7 +15,6 @@ from __future__ import annotations
 
 import hashlib
 import io
-import itertools
 import os
 import re
 import shutil
@@ -249,29 +248,94 @@ def trim(line: list[Word]) -> list[Word]:
     return line
 
 
-def wrap(line: list[Word], max_width: float) -> list[list[Word]]:
-    """Fewest lines that fit, balanced, preferring to break after punctuation."""
+def wrap(line: list[Word], max_width: float, max_lines: int = 6) -> list[list[Word]]:
+    """Fewest lines that fit, balanced, preferring breaks after punctuation.
+
+    Dynamic programming keeps the original cost (widest/narrowest line and
+    punctuation), without enumerating every partition. For each possible
+    narrowest width, retain the smallest widest width at each break point and
+    punctuation score. Scores are multiples of 1/20, so the number of states
+    is bounded by the line limit, rather than the number of partitions.
+    """
+    if isinstance(max_lines, bool) or not isinstance(max_lines, int) or max_lines < 1:
+        raise CardError("the line limit must be a positive integer.")
+    if max_width <= 0:
+        raise CardError("the available text width must be positive.")
+    for word in line:
+        if plain(word) != DOT and line_width([word]) > max_width:
+            raise CardError(f'word "{plain(word)}" does not fit in {max_width:.0f}px.')
     if line_width(line) <= max_width:
         return [line]
+
     n = len(line)
-    for count in range(2, min(n, 6) + 1):
-        best: tuple[float, list[list[Word]]] | None = None
-        for cuts in itertools.combinations(range(1, n), count - 1):
+    limit = min(n, max_lines)
+    failure = f'"{shown(line)}" does not fit in {max_width:.0f}px within {max_lines} lines.'
+    if limit < 2:
+        raise CardError(failure)
+
+    # Cache each possible line once, including the removable separator dots.
+    spans: dict[tuple[int, int], float] = {}
+    following: list[list[tuple[int, float]]] = [[] for _ in range(n)]
+    for start in range(n):
+        for end in range(start + 1, n + 1):
+            part = trim(line[start:end])
+            if part:
+                width = line_width(part)
+                if width <= max_width:
+                    spans[start, end] = width
+                    following[start].append((end, width))
+
+    # First find the fewest feasible lines. Impossible long paragraphs stop
+    # here, before any balancing work.
+    reachable = {0}
+    for count in range(1, limit + 1):
+        reachable = {end for start in reachable if start < n for end, _ in following[start]}
+        if count >= 2 and n in reachable:
+            break
+    else:
+        raise CardError(failure)
+
+    pauses = [0.0] + [break_cost(plain(line[i - 1]), plain(line[i])) for i in range(1, n)]
+    scores = [round(pause * 20) for pause in pauses]
+    # A state holds (widest width, cuts). Lexicographic cuts preserve the
+    # former left-to-right tie breaking when two partitions have equal cost.
+    best: tuple[float, tuple[int, ...]] | None = None
+    seen: set[tuple[int, ...]] = set()
+    for narrowest in sorted(set(spans.values())):
+        states: dict[int, dict[int, tuple[float, tuple[int, ...]]]] = {0: {0: (0.0, ())}}
+        for used in range(count):
+            next_states: dict[int, dict[int, tuple[float, tuple[int, ...]]]] = {}
+            for start, penalties in states.items():
+                if start == n:
+                    continue
+                for end, width in following[start]:
+                    if width < narrowest or n - end < count - used - 1:
+                        continue
+                    if (used == count - 1) != (end == n):
+                        continue
+                    target = next_states.setdefault(end, {})
+                    for penalty, (widest, cuts) in penalties.items():
+                        candidate = (max(widest, width), cuts + ((start,) if start else ()))
+                        score = penalty + scores[start]
+                        if score not in target or candidate < target[score]:
+                            target[score] = candidate
+            states = next_states
+            if not states:
+                break
+        for _, cuts in states.get(n, {}).values():
+            if cuts in seen:
+                continue
+            seen.add(cuts)
             edges = (0, *cuts, n)
-            lines = [trim(line[a:b]) for a, b in zip(edges, edges[1:])]
-            if not all(lines):
-                continue
-            widths = [line_width(part) for part in lines]
-            if max(widths) > max_width:
-                continue
-            # Short, even lines, with breaks where a reader would pause.
+            widths = [spans[a, b] for a, b in zip(edges, edges[1:])]
             cost = (1.25 * max(widths) - 0.25 * min(widths)) / max_width
-            cost += sum(break_cost(plain(line[cut - 1]), plain(line[cut])) for cut in cuts)
-            if best is None or cost < best[0]:
-                best = (cost, lines)
-        if best:
-            return best[1]
-    raise CardError(f'"{shown(line)}" does not fit in {max_width:.0f}px.')
+            cost += sum(pauses[cut] for cut in cuts)
+            candidate = (cost, cuts)
+            if best is None or candidate < best:
+                best = candidate
+    assert best is not None  # the reachability check found a feasible partition
+    edges = (0, *best[1], n)
+    return [trim(line[a:b]) for a, b in zip(edges, edges[1:])]
 
 
 # --------------------------------------------------------------------------
