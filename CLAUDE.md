@@ -35,7 +35,7 @@ This repository handles automated social media posting for PolicyEngine across m
 - Our wordmark alone at the bottom right; a funder's credit small at the top right, never beside our logo. The tests check this.
 - Sentence case on every line, the kicker included. No emoji.
 - Every stat keeps a `source`; change a figure only with its source.
-- When the card or video credits the funder, the post text doesn't (Max Ghenis, 28 October 23:24Z and 29 October 12:06Z). Only a post whose media carries no credit, such as a plain cover image or a bare link, credits the funder in its text: once per thread (the first post) and once per LinkedIn post, never in every reply.
+- If the card or video credits the funder, leave the credit out of the post text. Otherwise, credit the funder in the text once per thread (the first post) and once per LinkedIn post, never in every reply.
 
 Run the card tests from `cards/` with `uv run --group dev pytest` (on a Mac, prefix `DYLD_FALLBACK_LIBRARY_PATH="$(brew --prefix)/lib"`).
 
