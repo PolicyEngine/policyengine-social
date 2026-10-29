@@ -53,7 +53,7 @@ footer = "policyengine.org/uk/research"
   [[card.stats]]
   tag = "Pension Tax Allowance"
   value = "£0"
-  label = "income tax in 2027-28 for a pensioner with the standard Personal Allowance and income up to £13,036, all taxed at 20%"
+  label = "income tax in 2027-28 for a basic-rate pensioner with the standard Personal Allowance and income up to £13,036"
   source = "pension-tax-allowance, key figures"
 
   [[card.stats]]
@@ -94,7 +94,7 @@ id = "p1-pta"
 post = "P1, Pension Tax Allowance reply"
 gate = "none: live"
 kicker = "UK Autumn Budget 2026 · Pension Tax Allowance"
-headline = "In 2027-28, a pensioner taxed at 20% with income up to the full new State Pension pays no income tax"
+headline = "In 2027-28, a basic-rate pensioner with income up to the full new State Pension pays no income tax"
 note = "2027-28, with the standard Personal Allowance. The allowance applies for three tax years, to 5 April 2030."
 footer = "policyengine.org/uk/research/pension-tax-allowance"
 
