@@ -35,7 +35,7 @@ This repository handles automated social media posting for PolicyEngine across m
 - Our wordmark alone at the bottom right; a funder's credit small at the top right, never beside our logo. The tests check this.
 - Sentence case on every line, the kicker included. No emoji.
 - Every stat keeps a `source`; change a figure only with its source.
-- If the card or video credits the funder, leave the credit out of the post text. Otherwise, credit the funder in the text once per thread (the first post) and once per LinkedIn post, never in every reply.
+- If the card or video credits the funder, leave the funder out of the post text. No post has to mention the funder (Max Ghenis, 29 October 2026). When one does, put the mention inside a sentence that says something else, never in a one-off credit line such as "The Nuffield Foundation funds our UK Budget analysis." Use the active voice, as in "our UK Budget analysis, which @NuffieldFound funds, finds …", and tag the funder's own account on each platform. Mention it at most once per thread, in the first post.
 
 Run the card tests from `cards/` with `uv run --group dev pytest` (on a Mac, prefix `DYLD_FALLBACK_LIBRARY_PATH="$(brew --prefix)/lib"`).
 
